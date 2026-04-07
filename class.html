@@ -286,9 +286,37 @@
             .time-label { font-size: 10px; padding: 2px 4px; }
             .teacher-page-layout { grid-template-columns: 1fr; gap: 12px; }
             .teacher-side { padding: 10px; }
-            .teacher-grid { grid-template-columns: 1fr; gap: 12px; }
+            .teacher-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            .teacher-grid .teacher-card {
+                padding: 12px 8px;
+                border-radius: 16px;
+                min-width: 0;
+            }
+            .teacher-grid .avatar-circle {
+                width: 56px;
+                height: 56px;
+                margin-bottom: 8px;
+            }
+            .teacher-grid .teacher-card b { font-size: 13px; }
+            .teacher-grid .teacher-card p { font-size: 11px; }
+            .teacher-grid .social-display-list { gap: 4px; margin-top: 6px; }
+            .teacher-grid .social-item { font-size: 9px; padding: 2px 4px; }
+            .teacher-grid .btn-ui-tag-edit,
+            .teacher-grid .btn-ui-tag-del { font-size: 10px; padding: 3px 6px; }
             .edit-form { grid-template-columns: 1fr; }
-            .rank-grid { grid-template-columns: 1fr; }
+            .rank-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            .rank-grid .rank-card {
+                padding: 10px;
+                min-width: 0;
+                font-size: 12px;
+            }
+            .rank-grid .rank-item { font-size: 11px; padding: 5px 0; }
             #musicCtrl {
                 top: auto;
                 bottom: 88px;
