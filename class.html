@@ -241,38 +241,43 @@
                 font-size: 12px !important;
                 margin: 0 !important;
             }
+            /* 工具条：两列两排（四个框）+ 第三排两个按钮并排 */
             .toolbar {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 5px;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 6px 8px;
                 margin-bottom: 12px;
+                align-items: stretch;
             }
             .tool-card {
                 width: 100%;
                 box-sizing: border-box;
-                padding: 4px 10px;
+                padding: 6px 8px;
                 min-height: 0;
                 border-radius: 10px;
                 border-width: 1px;
-                font-size: 12px;
-                gap: 6px;
+                font-size: 11px;
+                gap: 4px;
                 justify-content: space-between;
+                align-items: center;
+                flex-wrap: wrap;
                 box-shadow: 0 2px 8px rgba(0,0,0,0.04);
             }
-            .tool-card span { font-size: 11px; }
+            .tool-card span { font-size: 10px; }
             .tool-card select,
             .tool-card input[type="date"],
             .tool-card input[type="text"] {
-                font-size: 12px !important;
+                font-size: 11px !important;
                 font-weight: 600;
                 padding: 2px 0;
                 flex: 1;
                 min-width: 0;
             }
             .toolbar > .btn-ui-secondary {
+                grid-column: span 1;
                 width: 100%;
-                padding: 7px 12px;
-                font-size: 12px;
+                padding: 7px 8px;
+                font-size: 11px;
                 box-sizing: border-box;
             }
             .calendar-head { grid-template-columns: 52px repeat(7, minmax(88px, 1fr)); }
