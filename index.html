@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>米米宇宙 - 智能教务管理系统</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body onclick="autoPlayAttempt()">
+<div id="musicCtrl">🌽<audio id="bgm" loop preload="auto"><source src="Tyu me.m4a" type="audio/mp4"></audio></div>
+
+<div id="authPage" class="auth-page">
+    <div class="auth-card">
+        <div class="auth-header"><h1>🌿 米米宇宙</h1><p>全能日期智能教务系统</p></div>
+        <div class="auth-body">
+            <div class="tab">
+                <button id="tabL" class="tab-btn active" onclick="switchAuthTab('L')">登录</button>
+                <button id="tabR" class="tab-btn" onclick="switchAuthTab('R')">注册</button>
+            </div>
+            <div id="loginForm">
+                <select id="lRole">
+                    <option value="student">我是学生</option>
+                    <option value="teacher">我是老师</option>
+                    <option value="admin">我是管理员</option>
+                    <option value="super">我是大管理</option>
+                </select>
+                <input type="text" id="lUser" placeholder="用户名/昵称">
+                <input type="password" id="lPass" placeholder="密码">
+                <button onclick="handleLogin()">进入系统</button>
+                <div style="text-align:center; margin-top:15px; font-size:13px; color:var(--primary-dark);" onclick="openForgotModal()">忘记密码？</div>
+            </div>
+            <div id="regForm" style="display:none;">
+                <select id="rRole" onchange="toggleTeacherInvite()">
+                    <option value="student">注册为学生</option>
+                    <option value="teacher">注册为老师</option>
+                </select>
+                <input type="text" id="rInvite" placeholder="老师邀请码（仅老师注册需要）" style="display:none;">
+                <input type="text" id="rUser" placeholder="设置昵称 (限30字)" maxlength="30">
+                <input type="email" id="rEmail" placeholder="绑定邮箱">
+                <input type="password" id="rPass" placeholder="设置密码 (至少8位，数字+英文)">
+                <input type="password" id="rPass2" placeholder="确认密码">
+                <button onclick="handleRegister()">立即注册</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="mainPage" class="main-page">
+    <div class="header">
+        <div style="font-weight:bold; color:var(--primary-dark); font-size:20px;">🌿 米米宇宙</div>
+        <div class="nav">
+            <a id="navS" class="active" onclick="changePage('S')">课程表</a>
+            <a id="navT" onclick="changePage('T')">教师档案</a>
+            <a id="navR" onclick="changePage('R')">排行榜</a>
+        </div>
+        <div>
+            <button id="teacherSelfBtn" class="btn-ui-secondary" style="padding:6px 12px; font-size:11px; margin-right:8px; display:none;" onclick="openMyTeacherProfile()">🎓 我的主页</button>
+            <button id="passBtn" class="btn-ui-secondary" style="padding:6px 12px; font-size:11px; margin-right:8px; display:none;" onclick="openPassModal()">🔒 改密码</button>
+            <button id="adminManageBtn" class="btn-ui-secondary" style="padding:6px 12px; font-size:11px; margin-right:8px; display:none;" onclick="openAdminManageModal()">🧾 管理员管理</button>
+            <button id="chatToggleBtn" onclick="toggleChatBox()" class="btn-ui-secondary" style="padding:6px 12px; font-size:11px; margin-right:8px;">💬 聊天</button>
+            <span id="userDisp"></span>
+            <button onclick="location.reload()" class="btn-ui-secondary" style="padding:6px 12px; font-size:11px; margin-left:10px; color:var(--danger)">退出</button>
+        </div>
+    </div>
+    <div id="pageS" class="container">
+        <div class="toolbar">
+            <div class="tool-card card-week"><span>📅 第</span><select id="weekSel" onchange="loadWeek()"></select><span>周</span></div>
+            <div class="tool-card card-date"><span>🗓️ 日期：</span><input type="date" id="dateViewInp" onchange="jumpToDate()"></div>
+            <div id="adminDateSet" class="tool-card card-date" style="display:none;"><span>⚙️ 起始日：</span><input type="date" id="startDateInp" onchange="updateDate()"></div>
+            <div class="tool-card card-search"><span>🔍</span><input type="text" id="searchInp" placeholder="查询关键词标黄..." oninput="doSearch()"></div>
+            <button class="btn-ui-secondary" onclick="exportScheduleImage()">📷 导出当前课表</button>
+            <button class="btn-ui-secondary" onclick="openMyScheduleModal()">🗓️ 我的行程</button>
+        </div>
+        <div id="searchResults" class="search-results"></div>
+        <div id="notifyBar" class="notify-bar"></div>
+        <div id="tagFilters" class="tag-filters"></div>
+        <div class="calendar-wrapper">
+            <div id="calendarHead" class="calendar-head"></div>
+            <div id="calendarBody" class="calendar-body"></div>
+        </div>
+        <div style="text-align:center; margin-top:25px;"><button id="adminBtnS" class="btn-ui-primary" style="display:none; width:220px;" onclick="openSModal()">✏️ 编辑此周课程</button></div>
+    </div>
+    <div id="pageT" class="container" style="display:none;">
+        <div class="invite-panel" id="invitePanel" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <b>老师邀请码</b>
+                <button class="btn-ui-secondary" style="font-size:11px;" onclick="generateInviteCode()">生成邀请码</button>
+            </div>
+            <div id="inviteList" style="margin-top:8px;"></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h3>教师团队</h3>
+            <div style="display:flex; gap:8px;">
+                <button id="adminCatBtn" class="btn-ui-secondary" style="display:none;" onclick="openCategoryModal()">分类管理</button>
+                <button id="adminBtnT" class="btn-ui-primary" style="display:none; width:130px;" onclick="openTModal()">+ 新增老师</button>
+            </div>
+        </div>
+        <div class="teacher-page-layout">
+            <div class="teacher-side">
+                <b>分类</b>
+                <div id="teacherCategories" style="margin-top:8px;"></div>
+            </div>
+            <div class="teacher-main">
+                <div class="teacher-search">
+                    <input id="teacherSearchInp" placeholder="搜索老师/分类" oninput="filterTeachers()">
+                    <button class="btn-ui-secondary" onclick="clearTeacherSearch()">清空</button>
+                </div>
+                <div id="teacherGrid" class="teacher-grid"></div>
+            </div>
+        </div>
+    </div>
+    <div id="pageR" class="container" style="display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h3>排行榜</h3>
+            <div class="rank-tabs">
+                <button class="btn-ui-secondary" onclick="renderRanks('week')">本周</button>
+                <button class="btn-ui-secondary" onclick="renderRanks('month')">本月</button>
+            </div>
+        </div>
+        <div class="rank-grid">
+            <div class="rank-card">
+                <b>热门课程</b>
+                <div id="rankCourses"></div>
+            </div>
+            <div class="rank-card">
+                <b>热门老师</b>
+                <div id="rankTeachers"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modalS" class="modal"><div class="modal-content">
+    <h3 style="margin:0">第 <span id="weekNumTitle"></span> 周 - 批量编辑课表</h3>
+    <div class="modal-scroll-area">
+        <table style="min-width:1800px; width:100%;">
+            <thead>
+                <tr>
+                    <th width="50">操作</th>
+                    <th width="100">时段</th>
+                    <th>周日</th><th>周一</th><th>周二</th><th>周三</th><th>周四</th><th>周五</th><th>周六</th>
+                </tr>
+            </thead>
+            <tbody id="editSBody"></tbody>
+        </table>
+    </div>
+    <div style="display:flex; gap:12px; border-top:1px solid #eee; padding-top:15px;">
+        <button class="btn-ui-primary" onclick="addRow()">+ 新增时间段</button>
+        <button class="btn-ui-primary" style="background:var(--edit)" onclick="saveS()">💾 保存本周修改</button>
+        <button class="btn-ui-secondary" onclick="closeM('modalS')">取消</button>
+    </div>
+</div></div>
+
+<div id="modalMySchedule" class="modal">
+    <div class="modal-content" style="max-width:520px;">
+        <h3>我的行程（仅自己可见）</h3>
+        <div id="myScheduleList"></div>
+        <button class="btn-ui-secondary" style="width:100%; margin-top:8px;" onclick="addMyScheduleRow()">+ 新增行程</button>
+        <button class="btn-ui-primary" style="width:100%; margin-top:8px;" onclick="saveMySchedule()">保存</button>
+        <button class="btn-ui-secondary" style="width:100%; margin-top:8px;" onclick="closeM('modalMySchedule')">关闭</button>
+    </div>
+</div>
+
+<div id="modalD" class="modal">
+    <div class="modal-content" style="max-width:520px; text-align:center; max-height:85vh; overflow-y:auto;">
+        <h2 id="dTitle" style="color:var(--primary-dark); margin:0;"></h2>
+        <div id="dTeacherInfo" style="display:flex; align-items:center; justify-content:center; background:var(--bg); padding:15px; border-radius:15px; margin:15px 0;"></div>
+        <div id="dVideoArea"></div>
+        <div class="detail-section">
+            <div id="dSeries"></div>
+            <div id="dTags" class="detail-tags"></div>
+            <button class="btn-ui-secondary" style="margin:8px 0;" onclick="scrollToOutline()">课程大纲</button>
+            <div id="dMaterials"></div>
+            <div id="dOutline" class="detail-outline"></div>
+        </div>
+        <div class="detail-actions">
+            <button id="wantBtn" class="btn-ui-secondary" onclick="toggleWant()">🤍 想看</button>
+            <button id="followBtn" class="btn-ui-secondary" onclick="toggleFollowFromDetail()">关注并订阅</button>
+        </div>
+        <div id="dEditArea" class="edit-area" style="display:none;">
+            <b>编辑课程详情</b>
+            <input id="dSeriesName" placeholder="系列名称">
+            <input id="dSeriesSub" placeholder="系列副标题">
+            <input id="dSeriesColor" placeholder="系列颜色(如 #4dabf7)">
+            <input id="dTagsInp" placeholder="标签(用逗号分隔)">
+            <input id="dMaterialsInp" placeholder="资料链接(可多条，用逗号分隔)">
+            <input id="dVideoInp" placeholder="回放链接">
+            <textarea id="dOutlineInp" placeholder="课程大纲"></textarea>
+            <button class="btn-ui-primary" onclick="saveCourseDetail()">保存详情</button>
+        </div>
+        <div class="detail-section">
+            <b>讨论区</b>
+            <div class="comment-list" id="dComments"></div>
+            <div class="reply-input">
+                <input id="dCommentInput" placeholder="提问/评论">
+                <button class="btn-ui-secondary" onclick="addComment()">发送</button>
+            </div>
+        </div>
+        <button class="btn-ui-secondary" style="width:100%; margin-top:15px;" onclick="closeM('modalD')">关闭详情</button>
+    </div>
+</div>
+
+<div id="modalT" class="modal"><div class="modal-content" style="max-width:450px;"><h3>教师信息管理</h3><div style="text-align:center"><div id="avaPrev" class="avatar-circle"></div><input type="file" id="tFile" accept="image/*" style="display:none" onchange="preview(this)"><button class="btn-ui-secondary" style="font-size:11px; padding:6px 16px;" onclick="document.getElementById('tFile').click()">更改头像</button></div><input type="hidden" id="editTId"><input type="text" id="tName" placeholder="姓名"><select id="tSub"></select><div style="background:#f4f9eb; padding:15px; border-radius:15px; margin:10px 0;"><input type="text" id="tLinkLabel1" placeholder="链接1名称 (如 公众号)"><input type="text" id="tLinkUrl1" placeholder="链接1地址"><input type="text" id="tLinkLabel2" placeholder="链接2名称 (如 B站)"><input type="text" id="tLinkUrl2" placeholder="链接2地址"></div><button class="btn-ui-primary" style="width:100%" onclick="saveT()">💾 保存档案</button><button class="btn-ui-secondary" style="width:100%; margin-top:10px;" onclick="closeM('modalT')">返回</button></div></div>
+
+<div id="modalTeacher" class="modal">
+    <div class="modal-content" style="max-width:520px;">
+        <div class="teacher-modal-header">
+            <div id="teacherAva" class="avatar-circle"></div>
+            <div>
+                <h3 id="teacherName" style="margin:0;"></h3>
+                <div id="teacherSub" style="color:var(--primary-dark); font-size:12px;"></div>
+            </div>
+        </div>
+        <div id="teacherLinks" class="teacher-links"></div>
+        <div id="teacherSignature" class="teacher-signature"></div>
+        <div style="display:flex; gap:8px;">
+            <button id="teacherFollowBtn" class="btn-ui-secondary" onclick="toggleFollowTeacher()">关注</button>
+            <button id="teacherEditBtn" class="btn-ui-secondary" onclick="editTeacherSelf()" style="display:none;">编辑主页</button>
+        </div>
+        <div class="teacher-course-list" id="teacherCourses"></div>
+        <button class="btn-ui-secondary" style="width:100%; margin-top:10px;" onclick="closeM('modalTeacher')">关闭</button>
+    </div>
+</div>
+
+<div id="modalTeacherEdit" class="modal">
+    <div class="modal-content" style="max-width:520px;">
+        <h3>编辑老师主页</h3>
+        <div style="text-align:center;">
+            <div id="teacherEditAva" class="avatar-circle"></div>
+            <input type="file" id="teacherEditFile" accept="image/*" style="display:none" onchange="previewTeacherEdit(this)">
+            <button class="btn-ui-secondary" style="font-size:11px; padding:6px 16px;" onclick="document.getElementById('teacherEditFile').click()">更换头像</button>
+        </div>
+        <input id="teacherEditName" placeholder="姓名（只读）" disabled>
+        <input id="teacherEditSub" placeholder="科目（只读）" disabled>
+        <input id="teacherEditSign" placeholder="个性签名">
+        <select id="teacherEditCat"></select>
+        <div id="teacherEditLinks"></div>
+        <select id="platformOptions" style="display:none;">
+            <option value="微博"></option>
+            <option value="抖音"></option>
+            <option value="小红书"></option>
+            <option value="B站"></option>
+            <option value="公众号"></option>
+            <option value="视频号"></option>
+            <option value="知乎"></option>
+            <option value="小宇宙"></option>
+        </select>
+        <button class="btn-ui-secondary" style="width:100%; margin-top:8px;" onclick="addTeacherLinkRow()">+ 添加链接</button>
+        <button class="btn-ui-primary" style="width:100%; margin-top:8px;" onclick="saveTeacherProfile()">保存主页</button>
+        <button class="btn-ui-secondary" style="width:100%; margin-top:8px;" onclick="closeM('modalTeacherEdit')">关闭</button>
+    </div>
+</div>
+
+<div id="modalCat" class="modal">
+    <div class="modal-content" style="max-width:420px;">
+        <h3>分类管理</h3>
+        <input id="catInp" placeholder="新增分类">
+        <button class="btn-ui-primary" style="width:100%; margin-top:8px;" onclick="addCategory()">添加</button>
+        <div id="catList" style="margin-top:10px;"></div>
+        <button class="btn-ui-secondary" style="width:100%; margin-top:8px;" onclick="closeM('modalCat')">关闭</button>
+    </div>
+</div>
+
+<div id="modalRankReason" class="modal">
+    <div class="modal-content" style="max-width:420px;">
+        <button class="btn-ui-secondary modal-close" onclick="closeM('modalRankReason')">×</button>
+        <h3 id="rankReasonTitle">推荐理由</h3>
+        <textarea id="rankReasonText" placeholder="写一句推荐理由"></textarea>
+        <button class="btn-ui-primary" style="width:100%; margin-top:8px;" onclick="saveRankReason()">保存</button>
+        <button class="btn-ui-secondary" style="width:100%; margin-top:8px;" onclick="closeM('modalRankReason')">关闭</button>
+    </div>
+</div>
+
+<div id="modalPass" class="modal">
+    <div class="modal-content" style="max-width:420px;">
+        <h3>修改密码</h3>
+        <input id="oldPass" type="password" placeholder="旧密码">
+        <input id="newPass" type="password" placeholder="新密码（至少8位，数字+英文）">
+        <input id="newPass2" type="password" placeholder="确认新密码">
+        <button class="btn-ui-primary" style="width:100%; margin-top:8px;" onclick="changeMyPassword()">保存</button>
+        <button class="btn-ui-secondary" style="width:100%; margin-top:8px;" onclick="closeM('modalPass')">关闭</button>
+    </div>
+</div>
+
+<div id="modalAdminManage" class="modal">
+    <div class="modal-content" style="max-width:520px;">
+        <h3>管理员管理（仅大管理）</h3>
+        <div class="edit-form">
+            <input id="adminUserInp" placeholder="管理员用户名">
+            <input id="adminPassInp" placeholder="管理员密码（至少8位）">
+        </div>
+        <button class="btn-ui-primary" style="width:100%; margin-top:8px;" onclick="addAdminAccount()">新增管理员</button>
+        <div id="adminList" style="margin-top:10px;"></div>
+        <button class="btn-ui-secondary" style="width:100%; margin-top:8px;" onclick="closeM('modalAdminManage')">关闭</button>
+    </div>
+</div>
+
+<div class="chat-widget" id="chatWidget">
+    <div id="chatMini" class="chat-mini" onclick="toggleChatBox()">💬 公共聊天室</div>
+    <div id="chatExpand" class="chat-expand">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <b>聊天</b>
+            <button class="btn-ui-secondary" style="font-size:11px;" onclick="toggleChatBox()">收起</button>
+        </div>
+        <div id="chatMessages" class="chat-messages"></div>
+        <div class="chat-input">
+            <input id="chatInput" placeholder="输入消息">
+            <button class="btn-ui-secondary" onclick="sendChat()">发送</button>
+        </div>
+    </div>
+</div>
+
+<div id="forgotModal" class="modal"><div class="modal-content" style="max-width:400px; text-align:center;"><h3>找回密码</h3><input type="email" id="forgotEmail" placeholder="输入绑定邮箱"><button class="btn-ui-primary" style="width:100%; margin-top:15px;" onclick="sendForgotEmail()">找回信息</button><button class="btn-ui-secondary" style="width:100%; margin-top:10px;" onclick="closeM('forgotModal')">取消</button></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="core.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>

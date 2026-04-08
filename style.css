@@ -1,0 +1,360 @@
+:root {
+            --primary: #9acd32; --primary-dark: #7cb329; --light: #f0ffdb;
+            --bg: #f8ffe6; --danger: #ff6b6b; --edit: #4dabf7; --today-bg: #fff9c4;
+            --douyin: #161823; --bilibili: #fb7299; --xhs: #ff2442; --video: #8e44ad;
+            --search-highlight: #ffeb3b;
+        }
+        body { margin: 0; font-family: 'Microsoft YaHei', sans-serif; background: linear-gradient(135deg, #e6ffcc, #d4f0b0); color: #333; min-height: 100vh; overflow-x: hidden; }
+        @keyframes rotateDisc { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        /* 全局交互手型 */
+        [onclick], button, .tab-btn, .nav a, .course-box, #musicCtrl, .icon-tag { cursor: pointer !important; user-select: none; }
+
+        /* --- 1. 顶部工具栏 --- */
+        .toolbar { display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; flex-wrap: wrap; }
+        .tool-card {
+            background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px);
+            padding: 10px 20px; border-radius: 50px; border: 2px solid white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; align-items: center;
+            gap: 10px; font-size: 14px; transition: 0.3s;
+        }
+        .tool-card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(154,205,50,0.15); }
+        .card-week { border-color: var(--primary); }
+        .card-date { border-color: var(--edit); }
+        .card-search { border-color: #fbc02d; background: rgba(255, 253, 231, 0.8); }
+        .tool-card select, .tool-card input { border: none; background: transparent; outline: none; font-family: inherit; font-weight: bold; color: #444; }
+
+        /* --- 2. 按钮与交互 --- */
+        button { border: none; transition: all 0.2s ease; outline: none; }
+        .btn-ui-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; padding: 10px 24px; border-radius: 10px; font-weight: bold; box-shadow: 0 4px 10px rgba(154,205,50,0.3); }
+        .btn-ui-secondary { background: #ffffff; color: #666; border: 1.5px solid #eee; padding: 10px 24px; border-radius: 10px; }
+        .btn-ui-tag-edit { background: #e7f5ff; color: #228be6; padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+        .btn-ui-tag-del { background: #fff5f5; color: #fa5252; padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; }
+        .btn-video-play { background: linear-gradient(45deg, #a4508b 0%, #5f0a87 74%); color: white; width: 100%; padding: 12px; border-radius: 12px; font-weight: bold; margin-top: 15px; }
+
+        /* --- 3. 登录注册页面 --- */
+        .auth-page { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+        .auth-card { background: rgba(255,255,255,0.98); border-radius: 28px; box-shadow: 0 20px 50px rgba(154,205,50,0.3); width: 100%; max-width: 420px; overflow: hidden; }
+        .auth-header { background: linear-gradient(135deg, var(--primary), #c0e070); color: #2a3a1a; text-align: center; padding: 40px 20px; }
+        .auth-body { padding: 30px; }
+        .tab { display: flex; background: #f8ffe6; border-radius: 12px; padding: 5px; margin-bottom: 20px; }
+        .tab-btn { flex: 1; padding: 12px; border: none; background: transparent; border-radius: 10px; font-size: 16px; }
+        .tab-btn.active { background: white; color: var(--primary-dark); font-weight: bold; }
+        input, select { width: 100%; padding: 12px; margin: 8px 0; border: 2px solid #eef2e6; border-radius: 12px; box-sizing: border-box; outline: none; }
+        .auth-body button { width: 100%; padding: 15px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; border-radius: 12px; font-weight: bold; font-size: 16px; margin-top: 10px; }
+
+        /* --- 4. 主界面布局 --- */
+        .main-page { display: none; }
+        .header { background: white; padding: 12px 30px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
+        .nav a { text-decoration: none; color: #666; margin: 0 15px; font-weight: bold; padding-bottom: 5px; border-bottom: 3.0px solid transparent; }
+        .nav a.active { color: var(--primary-dark); border-bottom-color: var(--primary); }
+        .container { padding: 20px; max-width: 1400px; margin: 0 auto; }
+        .table-wrapper { overflow-x: auto; border-radius: 20px; background: white; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; min-width: 1100px; }
+        th, td { padding: 12px; text-align: center; border-bottom: 1px solid #f0f0f0; }
+        th { background: var(--primary); color: white; }
+        .is-today { background: var(--today-bg) !important; font-weight: bold; }
+        .course-box { padding: 8px; border-radius: 8px; min-height: 60px; display: flex; flex-direction: column; justify-content: center; position: relative; border: 1px solid transparent; transition: background 0.3s; }
+        .course-box.highlight { background: var(--search-highlight) !important; border-color: #fbc02d; transform: scale(1.02); }
+        .video-badge { position: absolute; top: 2px; right: 2px; background: var(--video); color: white; font-size: 9px; padding: 1px 4px; border-radius: 4px; }
+
+        /* 教师卡片 */
+        .teacher-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px; }
+        .teacher-card { background: white; padding: 20px; border-radius: 25px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: flex; flex-direction: column; align-items: center; }
+        .avatar-circle { width: 90px; height: 90px; border-radius: 50%; margin-bottom: 12px; background-size: cover; background-position: center; border: 3px solid var(--light); background-color: #eee; }
+        .social-display-list { display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; margin-top: 10px; }
+        .social-item { display: flex; align-items: center; gap: 5px; font-size: 11px; background: #f9f9f9; padding: 4px 8px; border-radius: 8px; }
+        .icon-tag { width: 20px; height: 20px; border-radius: 50%; color: white; font-size: 10px; line-height: 20px; text-align: center; font-style: normal; font-weight: bold; }
+
+        /* --- 5. 音乐 --- */
+        #musicCtrl {
+            position: fixed; top: 20px; right: 20px; z-index: 9999;
+            width: 50px; height: 50px; border-radius: 50%;
+            background: white; display: flex; align-items: center; justify-content: center;
+            font-size: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            border: 2px solid var(--primary); touch-action: none;
+            animation: rotateDisc 5s linear infinite; animation-play-state: paused;
+        }
+
+        /* --- 6. 弹窗 --- */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); align-items: center; justify-content: center; z-index: 10000; padding: 20px; }
+        .modal-content { background: white; border-radius: 28px; width: 95%; max-width: 1100px; padding: 25px; max-height: 85vh; display: flex; flex-direction: column; overflow-y: auto; position: relative; }
+        .modal-content textarea { width: 100%; min-height: 80px; padding: 10px; border: 2px solid #eef2e6; border-radius: 12px; box-sizing: border-box; outline: none; font-family: inherit; }
+        .modal-close { position: absolute; right: 16px; top: 16px; width: 32px; height: 32px; border-radius: 50%; font-size: 16px; }
+        .modal-scroll-area { overflow-y: auto; flex: 1; margin: 15px 0; padding-right: 10px; border: 1px solid #f0f0f0; border-radius: 10px; }
+
+        /* 日历式课表 */
+        .calendar-wrapper { background: white; border-radius: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); overflow-x: auto; }
+        .calendar-head { display: grid; grid-template-columns: 80px repeat(7, minmax(140px, 1fr)); border-bottom: 1px solid #eee; background: #f6ffe4; }
+        .calendar-head-cell { padding: 10px; text-align: center; font-weight: bold; font-size: 13px; }
+        .calendar-head-cell.is-today { background: var(--today-bg); }
+        .calendar-body { display: grid; grid-template-columns: 80px repeat(7, minmax(140px, 1fr)); }
+        .calendar-time-col { position: relative; height: calc(50px * 24); border-right: 1px solid #eee; background: #fafafa; }
+        .time-label { height: 50px; font-size: 11px; color: #666; padding: 2px 6px; border-bottom: 1px solid #f0f0f0; box-sizing: border-box; }
+        .calendar-day-col { position: relative; height: calc(50px * 24); border-right: 1px solid #f0f0f0; background: repeating-linear-gradient(to bottom, #ffffff 0, #ffffff calc(50px - 1px), #f1f1f1 50px); }
+        .calendar-day-col:last-child { border-right: none; }
+        .event-box { position: absolute; left: 6px; right: 6px; background: #e8f5e9; border: 1px solid #a5d6a7; border-radius: 8px; padding: 6px; font-size: 12px; overflow: hidden; cursor: pointer; }
+        .event-box b { display: block; font-size: 12px; }
+        .event-box small { color: #557; display: block; margin-top: 2px; }
+        .event-box.highlight { background: var(--search-highlight) !important; border-color: #fbc02d; }
+        .series-tag { display: inline-block; padding: 2px 6px; border-radius: 8px; font-size: 10px; margin-top: 4px; }
+        .series-sub { display: block; font-size: 10px; color: #555; margin-top: 2px; }
+        .now-line { position: absolute; left: 0; right: 0; height: 2px; background: rgba(255,107,107,0.5); z-index: 5; }
+        .now-line::before { content: ""; position: absolute; left: 4px; top: -2px; width: 6px; height: 6px; background: rgba(255,107,107,0.5); border-radius: 50%; }
+        .want-mini { background: #ffe8cc; border: 1px solid #ffc078; border-radius: 999px; padding: 2px 6px; font-size: 10px; }
+        .edit-form { display: grid; grid-template-columns: repeat(2, minmax(140px, 1fr)); gap: 10px; margin: 10px 0; }
+        .edit-form button { width: 100%; }
+        .edit-form textarea { width: 100%; min-height: 60px; padding: 10px; border: 2px solid #eef2e6; border-radius: 12px; box-sizing: border-box; outline: none; font-family: inherit; }
+
+        /* 搜索结果/通知/排行 */
+        .search-results { width: 100%; max-width: 900px; margin: 10px auto 0; background: rgba(255,255,255,0.9); border: 1px solid #eee; border-radius: 12px; padding: 8px; display: none; }
+        .search-item { padding: 8px 10px; border-radius: 8px; cursor: pointer; }
+        .search-item:hover { background: #f3fbe6; }
+        .search-type { font-size: 11px; color: #555; margin-right: 8px; background: #f1f3f5; padding: 2px 6px; border-radius: 8px; }
+        .notify-bar { background: #fffbe6; border: 1px solid #ffe58f; padding: 10px 14px; border-radius: 12px; margin: 0 auto 15px; max-width: 1000px; display: none; }
+        .rank-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; margin: 10px 0 20px; }
+        .rank-card { background: white; border-radius: 16px; padding: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .rank-tabs { display: flex; gap: 8px; margin: 6px 0; }
+        .rank-item { display: flex; justify-content: space-between; font-size: 12px; padding: 6px 0; border-bottom: 1px dashed #eee; align-items: center; }
+        .rank-reason-btn { background: #eef6ff; color: #1c7ed6; border-radius: 6px; padding: 2px 6px; font-size: 11px; }
+        .rank-reason-text { font-size: 11px; color: #666; margin-top: 4px; }
+        .rank-reason-meta { display: flex; gap: 8px; align-items: center; font-size: 11px; color: #888; margin-top: 4px; }
+        .rank-like-btn { background: #fff4e6; color: #d9480f; border-radius: 6px; padding: 2px 6px; font-size: 11px; }
+
+        .tag-filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+        .tag-filter { background: #f1f3f5; border-radius: 999px; padding: 2px 8px; font-size: 10px; cursor: pointer; }
+        .tag-filter.active { background: #e8f5e9; color: #2f7d32; font-weight: bold; }
+        .tag-filter-actions { display: flex; gap: 6px; }
+
+        .event-box.personal { background: #fff7e6; border-color: #ffd8a8; }
+        .event-box.personal.course { background: #e7f5ff; border-color: #74c0fc; }
+
+        /* 聊天小窗 */
+        .chat-widget { position: fixed; right: 15px; bottom: 15px; z-index: 10002; width: 220px; }
+        .chat-mini { background: white; border: 1px solid #eee; border-radius: 12px; padding: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: pointer; }
+        .chat-expand { display: none; background: white; border: 1px solid #eee; border-radius: 12px; padding: 8px; box-shadow: 0 6px 18px rgba(0,0,0,0.15); }
+        .chat-messages { max-height: 220px; overflow: hidden; font-size: 12px; }
+        .chat-msg { margin-bottom: 6px; opacity: 0.95; transition: opacity 0.3s; }
+        .chat-input { display: flex; gap: 6px; margin-top: 8px; }
+        .chat-input input { margin: 0; }
+
+        /* 课程详情/评论/教师主页 */
+        .detail-section { text-align: left; margin-top: 12px; }
+        .detail-label { font-size: 12px; color: #666; margin-bottom: 4px; }
+        .detail-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+        .detail-tag { background: #f1f3f5; border-radius: 8px; padding: 3px 8px; font-size: 11px; }
+        .detail-outline { background: #f8f9fa; padding: 10px; border-radius: 10px; font-size: 12px; white-space: pre-wrap; }
+        .detail-actions { display: flex; gap: 8px; margin-top: 10px; }
+        .detail-actions button { flex: 1; }
+        .edit-area { background: #f8ffe6; border: 1px dashed #c5e1a5; padding: 10px; border-radius: 12px; margin-top: 12px; }
+        .edit-area input, .edit-area textarea { width: 100%; }
+        .comment-list { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+        .comment-item { background: #fafafa; border: 1px solid #eee; border-radius: 10px; padding: 8px; font-size: 12px; }
+        .comment-meta { color: #888; font-size: 11px; }
+        .reply-list { margin-top: 6px; padding-left: 10px; border-left: 2px solid #eee; }
+        .reply-input { display: flex; gap: 6px; margin-top: 6px; }
+
+        .teacher-modal-header { display: flex; align-items: center; gap: 12px; }
+        .teacher-links { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0; }
+        .teacher-link { background: #f3f3f3; padding: 4px 8px; border-radius: 8px; font-size: 11px; }
+        .teacher-course-list { margin-top: 10px; }
+        .teacher-course-item { background: #f9fafb; border: 1px solid #eee; padding: 8px; border-radius: 10px; margin-top: 6px; cursor: pointer; }
+        .teacher-signature { color: #666; font-size: 12px; margin: 6px 0; }
+
+        .teacher-page-layout { display: grid; grid-template-columns: 180px 1fr; gap: 16px; }
+        .teacher-side { background: #fff; border-radius: 16px; padding: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .teacher-cat { padding: 8px; border-radius: 10px; cursor: pointer; font-size: 12px; }
+        .teacher-cat.active { background: #f1f8e9; color: var(--primary-dark); font-weight: bold; }
+        .teacher-main { background: #fff; border-radius: 16px; padding: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .teacher-search { display: flex; gap: 8px; margin-bottom: 10px; }
+        .teacher-search input { margin: 0; }
+        .link-row { display: flex; gap: 8px; margin-top: 6px; }
+        .link-row input { margin: 0; }
+        .platform-select { width: 100%; }
+
+        /* 邀请码面板 */
+        .invite-panel { background: #fffbe6; border: 1px dashed #ffe58f; padding: 10px; border-radius: 12px; margin-bottom: 12px; }
+        .invite-code { background: #ffffff; border: 1px solid #eee; padding: 4px 8px; border-radius: 6px; font-size: 12px; display: inline-block; margin-right: 6px; }
+
+        /* 响应式 */
+        @media (max-width: 900px) {
+            .header { flex-direction: column; gap: 10px; align-items: flex-start; }
+            .toolbar { justify-content: flex-start; }
+            .modal-content { max-width: 95vw; }
+            .calendar-head { grid-template-columns: 60px repeat(7, minmax(120px, 1fr)); }
+            .calendar-body { grid-template-columns: 60px repeat(7, minmax(120px, 1fr)); }
+        }
+
+        /* 手机端：布局收紧、聊天改底部抽屉、避免遮挡 */
+        @media (max-width: 600px) {
+            body { font-size: 15px; -webkit-text-size-adjust: 100%; }
+            .container { padding: 12px 10px; }
+            .header {
+                padding: 10px 12px;
+                gap: 8px;
+                align-items: stretch;
+            }
+            .header > div:first-child { font-size: 16px !important; }
+            .nav {
+                display: flex;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                gap: 0;
+                width: 100%;
+                padding-bottom: 4px;
+                margin: 0 -4px;
+                scrollbar-width: none;
+            }
+            .nav::-webkit-scrollbar { display: none; }
+            .nav a {
+                flex: 0 0 auto;
+                margin: 0 14px 0 0;
+                padding: 8px 2px 10px;
+                font-size: 14px;
+                white-space: nowrap;
+            }
+            .header > div:last-child {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+                align-items: center;
+                width: 100%;
+            }
+            .header > div:last-child #userDisp {
+                order: -1;
+                flex: 1 1 100%;
+                font-size: 12px;
+                color: #555;
+                line-height: 1.4;
+                padding: 2px 0 4px;
+            }
+            .header > div:last-child button,
+            .header > div:last-child .btn-ui-secondary {
+                padding: 7px 10px !important;
+                font-size: 12px !important;
+                margin: 0 !important;
+            }
+            /* 工具条：两列两排（四个框）+ 第三排两个按钮并排 */
+            .toolbar {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 6px 8px;
+                margin-bottom: 12px;
+                align-items: stretch;
+            }
+            .tool-card {
+                width: 100%;
+                box-sizing: border-box;
+                padding: 6px 8px;
+                min-height: 0;
+                border-radius: 10px;
+                border-width: 1px;
+                font-size: 11px;
+                gap: 4px;
+                justify-content: space-between;
+                align-items: center;
+                flex-wrap: wrap;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            }
+            .tool-card span { font-size: 10px; }
+            .tool-card select,
+            .tool-card input[type="date"],
+            .tool-card input[type="text"] {
+                font-size: 11px !important;
+                font-weight: 600;
+                padding: 2px 0;
+                flex: 1;
+                min-width: 0;
+            }
+            .toolbar > .btn-ui-secondary {
+                grid-column: span 1;
+                width: 100%;
+                padding: 7px 8px;
+                font-size: 11px;
+                box-sizing: border-box;
+            }
+            .calendar-head { grid-template-columns: 52px repeat(7, minmax(88px, 1fr)); }
+            .calendar-body { grid-template-columns: 52px repeat(7, minmax(88px, 1fr)); }
+            .calendar-head-cell { font-size: 11px; padding: 8px 4px; }
+            .time-label { font-size: 10px; padding: 2px 4px; }
+            .teacher-page-layout { grid-template-columns: 1fr; gap: 12px; }
+            .teacher-side { padding: 10px; }
+            .teacher-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            .teacher-grid .teacher-card {
+                padding: 12px 8px;
+                border-radius: 16px;
+                min-width: 0;
+            }
+            .teacher-grid .avatar-circle {
+                width: 56px;
+                height: 56px;
+                margin-bottom: 8px;
+            }
+            .teacher-grid .teacher-card b { font-size: 13px; }
+            .teacher-grid .teacher-card p { font-size: 11px; }
+            .teacher-grid .social-display-list { gap: 4px; margin-top: 6px; }
+            .teacher-grid .social-item { font-size: 9px; padding: 2px 4px; }
+            .teacher-grid .btn-ui-tag-edit,
+            .teacher-grid .btn-ui-tag-del { font-size: 10px; padding: 3px 6px; }
+            .edit-form { grid-template-columns: 1fr; }
+            .rank-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            .rank-grid .rank-card {
+                padding: 10px;
+                min-width: 0;
+                font-size: 12px;
+            }
+            .rank-grid .rank-item { font-size: 11px; padding: 5px 0; }
+            #musicCtrl {
+                top: auto;
+                bottom: 88px;
+                right: 10px;
+                width: 44px;
+                height: 44px;
+                font-size: 22px;
+            }
+            .chat-widget {
+                left: 0;
+                right: 0;
+                bottom: 0;
+                width: 100%;
+                max-width: none;
+                padding: 0;
+            }
+            .chat-mini {
+                margin: 0 12px 10px;
+                padding: 10px 12px;
+                font-size: 13px;
+                border-radius: 12px;
+                text-align: center;
+            }
+            .chat-expand {
+                position: fixed;
+                left: 0 !important;
+                right: 0 !important;
+                bottom: 0 !important;
+                width: 100% !important;
+                max-height: min(52vh, 420px);
+                border-radius: 16px 16px 0 0;
+                padding: 12px 12px calc(12px + env(safe-area-inset-bottom));
+                box-shadow: 0 -6px 24px rgba(0,0,0,0.12);
+                box-sizing: border-box;
+                z-index: 10003;
+            }
+            .chat-messages {
+                max-height: min(200px, 32vh);
+                overflow-y: auto;
+            }
+            .modal { padding: 10px; }
+            .modal-content {
+                max-height: 90vh;
+                border-radius: 16px;
+                padding: 16px;
+            }
+            #adminBtnS { width: 100% !important; max-width: none; box-sizing: border-box; }
+        }
