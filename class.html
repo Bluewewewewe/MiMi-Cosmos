@@ -17,6 +17,14 @@
         /* 全局交互手型 */
         [onclick], button, .tab-btn, .nav a, .course-box, #musicCtrl, .icon-tag { cursor: pointer !important; user-select: none; }
 
+        /* 移动端：去掉 WebKit/Chrome 点击时的默认高亮（部分机型会整片闪蓝/灰） */
+        html { -webkit-tap-highlight-color: transparent; }
+        a, button, [onclick], .tab-btn, .nav a, .course-box, #musicCtrl, .tool-card,
+        .btn-ui-primary, .btn-ui-secondary, .chat-mini, .modal-close, select, input, textarea {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
         /* --- 1. 顶部工具栏 --- */
         .toolbar { display: flex; justify-content: center; gap: 15px; margin-bottom: 25px; flex-wrap: wrap; }
         .tool-card {
@@ -369,7 +377,7 @@
 </head>
 <body onclick="autoPlayAttempt()">
 
-<div id="musicCtrl">🌽<audio id="bgm" loop preload="auto"><source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg"></audio></div>
+<div id="musicCtrl">🌽<audio id="bgm" loop preload="auto"></audio></div>
 
 <div id="authPage" class="auth-page">
     <div class="auth-card">
@@ -709,9 +717,14 @@ function saveStorage() {
 const weekSel = document.getElementById('weekSel');
 for(let i=1; i<=20; i++) weekSel.add(new Option(i, i));
 
+// ==================== 背景音乐（只改下面这一行地址）====================
+// 换成任意可播放的 MP3：① https 直链 ② 与 class.html 同目录的相对路径，如 "bgm.mp3"（部署时一起上传）
+const BGM_URL = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
+
 // ==================== 音乐与拖拽 ====================
 let isPlaying = false, isExplicitlyPaused = false, isDragging = false, startX, startY;
 const musicCtrl = document.getElementById('musicCtrl'), bgm = document.getElementById('bgm');
+if (BGM_URL) bgm.src = BGM_URL;
 
 musicCtrl.onmousedown = (e) => {
     isDragging = false; startX = e.clientX; startY = e.clientY;
