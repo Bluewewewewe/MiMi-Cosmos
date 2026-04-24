@@ -1,0 +1,64 @@
+/* ========================================
+   3. 登录 / 注册页面
+======================================== */
+.auth-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.auth-card {
+    background: rgba(255,255,255,0.98);
+    border-radius: 28px;
+    box-shadow: 0 20px 50px rgba(154,205,50,0.3);
+    width: 100%;
+    max-width: 420px;
+    overflow: hidden;
+}
+
+.auth-header {
+    background: linear-gradient(135deg, var(--primary), #c0e070);
+    color: #2a3a1a;
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.auth-body {
+    padding: 30px;
+}
+
+.tab {
+    display: flex;
+    background: #f8ffe6;
+    border-radius: 12px;
+    padding: 5px;
+    margin-bottom: 20px;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    background: transparent;
+    border-radius: 10px;
+    font-size: 16px;
+}
+
+.tab-btn.active {
+    background: white;
+    color: var(--primary-dark);
+    font-weight: bold;
+}
+
+.auth-body button {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    border-radius: 12px;
+    font-weight: bold;
+    font-size: 16px;
+    margin-top: 10px;
+}

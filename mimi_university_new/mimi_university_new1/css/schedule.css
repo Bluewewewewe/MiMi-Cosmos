@@ -1,0 +1,209 @@
+/* ========================================
+   5. 课程表（日历）模块
+======================================== */
+.calendar-wrapper {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+    overflow-x: auto;
+}
+
+.calendar-head {
+    display: grid;
+    grid-template-columns: 80px repeat(7, minmax(140px, 1fr));
+    border-bottom: 1px solid #eee;
+    background: #f6ffe4;
+}
+
+.calendar-head-cell {
+    padding: 10px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+.calendar-head-cell.is-today {
+    background: var(--today-bg);
+}
+
+.calendar-body {
+    display: grid;
+    grid-template-columns: 80px repeat(7, minmax(140px, 1fr));
+}
+
+.calendar-time-col {
+    position: relative;
+    height: calc(50px * 24);
+    border-right: 1px solid #eee;
+    background: #fafafa;
+}
+
+.time-label {
+    height: 50px;
+    font-size: 11px;
+    color: #666;
+    padding: 2px 6px;
+    border-bottom: 1px solid #f0f0f0;
+    box-sizing: border-box;
+}
+
+.calendar-day-col {
+    position: relative;
+    height: calc(50px * 24);
+    border-right: 1px solid #f0f0f0;
+    background: repeating-linear-gradient(
+        to bottom,
+        #ffffff 0,
+        #ffffff calc(50px - 1px),
+        #f1f1f1 50px
+    );
+}
+
+.calendar-day-col:last-child {
+    border-right: none;
+}
+
+.event-box {
+    position: absolute;
+    left: 6px;
+    right: 6px;
+    background: #e8f5e9;
+    border: 1px solid #a5d6a7;
+    border-radius: 8px;
+    padding: 6px;
+    font-size: 12px;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.event-box b {
+    display: block;
+    font-size: 12px;
+}
+
+.event-box small {
+    color: #557;
+    display: block;
+    margin-top: 2px;
+}
+
+.event-box.highlight {
+    background: var(--search-highlight) !important;
+    border-color: #fbc02d;
+}
+
+.series-tag {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 10px;
+    margin-top: 4px;
+}
+
+.series-sub {
+    display: block;
+    font-size: 10px;
+    color: #555;
+    margin-top: 2px;
+}
+
+.now-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: rgba(255,107,107,0.5);
+    z-index: 5;
+}
+
+.now-line::before {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: -2px;
+    width: 6px;
+    height: 6px;
+    background: rgba(255,107,107,0.5);
+    border-radius: 50%;
+}
+
+.want-mini {
+    background: #ffe8cc;
+    border: 1px solid #ffc078;
+    border-radius: 999px;
+    padding: 2px 6px;
+    font-size: 10px;
+}
+
+.edit-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(140px, 1fr));
+    gap: 10px;
+    margin: 10px 0;
+}
+
+.edit-form button {
+    width: 100%;
+}
+
+.edit-form textarea {
+    width: 100%;
+    min-height: 60px;
+    padding: 10px;
+    border: 2px solid #eef2e6;
+    border-radius: 12px;
+    box-sizing: border-box;
+    outline: none;
+    font-family: inherit;
+}
+
+.event-box.personal {
+    background: #fff7e6;
+    border-color: #ffd8a8;
+}
+
+.event-box.personal.course {
+    background: #e7f5ff;
+    border-color: #74c0fc;
+}
+
+
+/* ========================================
+   12. 响应式适配
+======================================== */
+
+/* 12.1 平板及中等屏幕 */
+@media (max-width: 900px) {
+    .calendar-head {
+        grid-template-columns: 60px repeat(7, minmax(120px, 1fr));
+    }
+
+    .calendar-body {
+        grid-template-columns: 60px repeat(7, minmax(120px, 1fr));
+    }
+}
+
+/* 12.2 手机端 */
+@media (max-width: 600px) {
+    .calendar-head {
+        grid-template-columns: 52px repeat(7, minmax(88px, 1fr));
+    }
+
+    .calendar-body {
+        grid-template-columns: 52px repeat(7, minmax(88px, 1fr));
+    }
+
+    .calendar-head-cell {
+        font-size: 11px;
+        padding: 8px 4px;
+    }
+
+    .time-label {
+        font-size: 10px;
+        padding: 2px 4px;
+    }
+
+    .edit-form {
+        grid-template-columns: 1fr;
+    }
+}
