@@ -119,6 +119,7 @@
             <button id="adminManageBtn" class="btn-ui-secondary" style="padding:6px 12px; font-size:11px; margin-right:8px; display:none;" onclick="handleAdminManage()">🧾 管理员管理</button>
             <!-- 聊天按钮：点击打开聊天框，显示绿色反馈 -->
             <button id="chatToggleBtn" onclick="handleChatToggle()" class="btn-ui-secondary" style="padding:6px 12px; font-size:11px; margin-right:8px;">💬 聊天</button>
+            <button id="feedbackBtn" onclick="handleFeedback()" class="btn-ui-secondary" style="padding:6px 12px; font-size:11px; margin-right:8px;">📝 意见箱</button>
             <span id="userDisp"></span>
             <!-- 刷新按钮：点击刷新当前页面，显示绿色反馈 -->
             <button id="refreshBtn" onclick="handleRefresh()" class="btn-ui-secondary" style="padding:6px 12px; font-size:11px; margin-left:10px;">🔄 刷新</button>
@@ -230,6 +231,43 @@
                 <b>热门老师</b>
                 <div id="rankTeachers"></div>
             </div>
+        </div>
+    </div>
+
+    <!-- ========================================
+         4.5 页面四：意见收集箱
+    ========================================= -->
+    <div id="pageF" class="container" style="display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; gap:10px; flex-wrap:wrap;">
+            <h3>意见收集箱</h3>
+            <span id="feedbackHint" style="color:#666; font-size:13px;"></span>
+        </div>
+
+        <div class="rank-card" style="padding:20px; margin-bottom:20px;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+                <span style="font-size:13px; color:#555;">意见分类：</span>
+                <select id="feedbackCategory"></select>
+            </div>
+            <textarea id="feedbackText" placeholder="请输入你的意见，学生与老师只会看见自己提交的意见，管理员和大管理可以查看所有意见。" style="width:100%; min-height:140px; padding:14px; border-radius:16px; border:1px solid #e8f0f6; resize:vertical; font-size:14px;"></textarea>
+            <div style="display:flex; justify-content:flex-end; margin-top:12px; gap:10px; flex-wrap:wrap;">
+                <button id="feedbackSubmitBtn" class="btn-ui-primary" onclick="submitFeedback()">提交意见</button>
+            </div>
+        </div>
+
+        <div class="rank-card" style="padding:20px;">
+            <h4 id="feedbackListTitle">我的反馈</h4>
+            <div class="feedback-toolbar" style="margin-top:12px; margin-bottom:14px;">
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <span style="font-size:13px; color:#555;">全部反馈分类：</span>
+                    <select id="feedbackFilterCategory" onchange="renderFeedbackPage()"></select>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-left:18px;">
+                    <span style="font-size:13px; color:#555;">状态筛选：</span>
+                    <select id="feedbackFilterStatus" onchange="renderFeedbackPage()"></select>
+                </div>
+                <button class="btn-ui-secondary" style="margin-left:auto;" onclick="clearFeedbackFilters()">清空筛选</button>
+            </div>
+            <div id="feedbackList" style="display:grid; gap:12px; margin-top:14px;"></div>
         </div>
     </div>
 </div>

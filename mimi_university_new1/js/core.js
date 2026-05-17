@@ -62,6 +62,7 @@ const weekNames = ["周日","周一","周二","周三","周四","周五","周六
 
 // 当前显示的页面，S: 课程表, T: 教师档案, R: 排行榜
 let currentPage = "S";
+let feedbackEntries = [];
 let reactions = {};
 let followCounts = {};
 let inviteCodes = [];
@@ -87,6 +88,8 @@ let currentRankMode = "week";
 let selectedDateStr = ""; // 用户选择的日期，用于高亮显示
 const PLATFORM_OPTIONS = ["微博","抖音","小红书","B站","公众号","视频号","知乎","小宇宙"];
 const REASON_LIKE_FLAGS_KEY = "mimi_rank_reason_likes_v1";
+const FEEDBACK_CATEGORIES = ["功能建议", "体验问题", "课程咨询", "其他"];
+const FEEDBACK_STATUS_OPTIONS = ["全部", "未解决", "已解决"];
 
 let supabaseClient = null;
 if (SUPABASE_URL && SUPABASE_ANON_KEY && window.supabase) {
@@ -108,6 +111,7 @@ function getDefaultState() {
         teacherCategories: ["默认"],
         rankReasons: {},
         userSchedules: {},
+        feedbackEntries: [],
         lastLoginAt: {},
         config: { start: formatLocalDate(new Date()) },
         chatMessages: []
@@ -182,6 +186,35 @@ function normalizeData() {
     followCounts = followCounts || {};
     inviteCodes = (inviteCodes || []).filter(c => typeof c === "string").map(c => c.replace(/\s+/g, "").toUpperCase());
     if (!Array.isArray(teacherCategories) || teacherCategories.length === 0) teacherCategories = ["默认"];
+    feedbackEntries = Array.isArray(feedbackEntries) ? feedbackEntries : [];
+    feedbackEntries = feedbackEntries.map(e => {
+        const base = {
+            id: e.id || ("f" + Math.random().toString(36).slice(2)),
+            user: e.user || "匿名",
+            role: e.role || "student",
+            content: String(e.content || "").trim(),
+            ts: e.ts || Date.now(),
+            category: FEEDBACK_CATEGORIES.includes(e.category) ? e.category : FEEDBACK_CATEGORIES[0],
+            status: e.status === "已解决" ? "已解决" : "未解决",
+            messages: []
+        };
+        if (Array.isArray(e.messages)) {
+            base.messages = e.messages.map(m => ({
+                text: String(m.text || "").trim(),
+                user: m.user || base.user,
+                role: m.role || base.role,
+                ts: m.ts || Date.now()
+            })).filter(m => m.text);
+        } else if (e.reply && e.reply.text) {
+            base.messages = [{
+                text: String(e.reply.text).trim(),
+                user: e.reply.user || "管理员",
+                role: e.reply.role || "admin",
+                ts: e.reply.ts || Date.now()
+            }];
+        }
+        return base;
+    }).filter(e => e.content);
     rankReasons = rankReasons || {};
     userSchedules = userSchedules || {};
     Object.keys(rankReasons).forEach(k => {
@@ -196,7 +229,7 @@ function normalizeData() {
 }
 
 function saveAll() {
-    const payload = { userDB, teachers, allWeeks, reactions, followCounts, inviteCodes, teacherCategories, rankReasons, userSchedules, lastLoginAt, config, chatMessages };
+    const payload = { userDB, teachers, allWeeks, reactions, followCounts, inviteCodes, teacherCategories, rankReasons, userSchedules, feedbackEntries, lastLoginAt, config, chatMessages };
     saveStorageV2(payload);
 }
 
@@ -338,6 +371,8 @@ function refreshCurrentPage() {
         renderInviteList();
     } else if (currentPage === "R") {
         renderRanks(currentRankMode);
+    } else if (currentPage === "F") {
+        renderFeedbackPage();
     }
 }
 
@@ -346,6 +381,7 @@ function changePage(p) {
     document.getElementById("pageS").style.display = p === "S" ? "block" : "none";
     document.getElementById("pageT").style.display = p === "T" ? "block" : "none";
     document.getElementById("pageR").style.display = p === "R" ? "block" : "none";
+    document.getElementById("pageF").style.display = p === "F" ? "block" : "none";
     document.getElementById("navS").className = p === "S" ? "active" : "";
     document.getElementById("navT").className = p === "T" ? "active" : "";
     document.getElementById("navR").className = p === "R" ? "active" : "";
@@ -354,6 +390,7 @@ function changePage(p) {
         renderInviteList();
     }
     if (p === "R") renderRanks(currentRankMode || "week");
+    if (p === "F") renderFeedbackPage();
 }
 
 // 按钮点击效果处理
@@ -369,6 +406,171 @@ function setButtonActive(btnId) {
 function handleChatToggle() {
     setButtonActive('chatToggleBtn');
     toggleChatBox();
+}
+
+function handleFeedback() {
+    setButtonActive('feedbackBtn');
+    changePage('F');
+}
+
+function renderFeedbackPage() {
+    const hint = document.getElementById('feedbackHint');
+    const list = document.getElementById('feedbackList');
+    const title = document.getElementById('feedbackListTitle');
+    const textarea = document.getElementById('feedbackText');
+    const categorySelect = document.getElementById('feedbackCategory');
+    const filterCategory = document.getElementById('feedbackFilterCategory');
+    const filterStatus = document.getElementById('feedbackFilterStatus');
+    if (!hint || !list || !title || !textarea || !categorySelect || !filterCategory || !filterStatus || !currentUser) return;
+
+    const isAdminViewer = isAdmin || isSuper;
+    hint.innerText = isAdminViewer ? '管理员和大管理可查看所有意见' : '你仅可查看自己提交的意见';
+
+    // 初始化分类选项
+    const currentFilterCategory = filterCategory.value || '全部';
+    const currentFilterStatus = filterStatus.value || '全部';
+    categorySelect.innerHTML = FEEDBACK_CATEGORIES.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+    filterCategory.innerHTML = ['全部', ...FEEDBACK_CATEGORIES].map(cat => `<option value="${cat}">${cat}</option>`).join('');
+    filterStatus.innerHTML = FEEDBACK_STATUS_OPTIONS.map(status => `<option value="${status}">${status}</option>`).join('');
+    filterCategory.value = ['全部', ...FEEDBACK_CATEGORIES].includes(currentFilterCategory) ? currentFilterCategory : '全部';
+    filterStatus.value = FEEDBACK_STATUS_OPTIONS.includes(currentFilterStatus) ? currentFilterStatus : '全部';
+
+    const selectedCategory = filterCategory.value || '全部';
+    const selectedStatus = filterStatus.value || '全部';
+
+    const visibleEntries = feedbackEntries
+        .slice()
+        .reverse()
+        .filter(e => (isAdminViewer || e.user === currentUser.name)
+            && (selectedCategory === '全部' || e.category === selectedCategory)
+            && (selectedStatus === '全部' || e.status === selectedStatus)
+        );
+
+    const filterLabel = selectedCategory === '全部' ? '' : ` / 分类：${selectedCategory}`;
+    const statusLabel = selectedStatus === '全部' ? '' : ` / 状态：${selectedStatus}`;
+    title.innerText = isAdminViewer
+        ? `全部反馈 (${visibleEntries.length})${filterLabel}${statusLabel}`
+        : `我的反馈 (${visibleEntries.length})${filterLabel}${statusLabel}`;
+    list.innerHTML = visibleEntries.length
+        ? visibleEntries.map(entry => {
+            const time = new Date(entry.ts).toLocaleString();
+            const owner = isAdminViewer ? `<div style="font-size:12px;color:#999; margin-top:8px;">${entry.user} / ${entry.role}</div>` : '';
+            const conversation = (entry.messages || []).map(msg => {
+                const author = msg.role === 'admin' || msg.role === 'super' ? '管理员' : (msg.user === currentUser.name ? '我' : msg.user);
+                const bg = msg.role === 'admin' || msg.role === 'super' ? '#fffbea' : '#e7f5ff';
+                return `<div style="margin-top:12px; padding:12px; background:${bg}; border-radius:14px; border:1px solid #f3e9c8;"><div style="font-size:13px; color:#555; font-weight:600;">${author}：</div><div style="white-space:pre-wrap; margin-top:8px; color:#333;">${msg.text}</div><div style="font-size:12px; color:#999; margin-top:8px;">${new Date(msg.ts).toLocaleString()}</div></div>`;
+            }).join('');
+            const canOwn = entry.user === currentUser.name;
+            const adminActions = `<div class="feedback-card-actions"><button class="btn-ui-secondary" onclick="replyFeedback('${entry.id}')">回复</button><button class="btn-ui-secondary" style="background:#fff1f0; color:#c92a2a;" onclick="deleteFeedback('${entry.id}')">删除</button><button class="btn-ui-primary" style="background:${entry.status==='已解决' ? '#ff6b6b' : 'var(--primary)'}" onclick="toggleFeedbackStatus('${entry.id}')">${entry.status==='已解决' ? '标记未解决' : '标记已解决'}</button></div>`;
+            const ownActions = canOwn ? `<div class="feedback-card-actions"><button class="btn-ui-secondary" onclick="editFeedback('${entry.id}')">编辑</button><button class="btn-ui-secondary" onclick="replyFeedback('${entry.id}')">回复管理员</button><button class="btn-ui-secondary" style="background:#fff1f0; color:#c92a2a;" onclick="deleteFeedback('${entry.id}')">删除</button></div>` : '';
+            const actionBlock = isAdminViewer ? adminActions : ownActions;
+            return `
+                <div style="background:#ffffff; padding:18px; border-radius:20px; border:1px solid #f0f1ea; box-shadow:0 4px 20px rgba(0,0,0,0.03);">
+                    <div style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between;">
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <span class="feedback-badge category">${entry.category}</span>
+                            <span class="feedback-badge status ${entry.status==='未解决' ? 'status-unresolved' : ''}">${entry.status}</span>
+                        </div>
+                        <div style="font-size:12px; color:#999;">${time}</div>
+                    </div>
+                    <div style="white-space:pre-wrap; line-height:1.8; color:#333; margin-top:14px;">${entry.content}</div>
+                    ${owner}
+                    ${conversation}
+                    ${actionBlock}
+                </div>
+            `;
+        }).join('')
+        : '<div style="color:#888;">暂无反馈</div>';
+}
+
+function submitFeedback() {
+    if (!currentUser) return alert('请先登录后提交意见');
+    const textarea = document.getElementById('feedbackText');
+    const categorySelect = document.getElementById('feedbackCategory');
+    if (!textarea || !categorySelect) return;
+    const content = textarea.value.trim();
+    const category = FEEDBACK_CATEGORIES.includes(categorySelect.value) ? categorySelect.value : FEEDBACK_CATEGORIES[0];
+    if (!content) return alert('请输入你的意见内容');
+
+    feedbackEntries.push({
+        id: 'f' + Date.now() + Math.random().toString(36).slice(2),
+        user: currentUser.name,
+        role: currentUser.type,
+        content,
+        ts: Date.now(),
+        category,
+        status: '未解决',
+        messages: []
+    });
+    textarea.value = '';
+    saveAll();
+    renderFeedbackPage();
+    alert('你的意见已提交，感谢反馈！');
+}
+
+function clearFeedbackFilters() {
+    const filterCategory = document.getElementById('feedbackFilterCategory');
+    const filterStatus = document.getElementById('feedbackFilterStatus');
+    if (filterCategory) filterCategory.value = '全部';
+    if (filterStatus) filterStatus.value = '全部';
+    renderFeedbackPage();
+}
+
+function replyFeedback(id) {
+    if (!currentUser) return alert('请先登录');
+    const entry = feedbackEntries.find(item => item.id === id);
+    if (!entry) return alert('未找到该反馈');
+    if (!(isAdmin || isSuper) && entry.user !== currentUser.name) return alert('你没有权限回复该意见');
+    const promptText = (isAdmin || isSuper) ? '请输入管理员回复内容：' : '请输入你想发送给管理员的说明：';
+    const replyText = prompt(promptText, '');
+    if (replyText === null) return;
+    const text = String(replyText).trim();
+    if (!text) return alert('回复内容不能为空');
+    entry.messages = Array.isArray(entry.messages) ? entry.messages : [];
+    entry.messages.push({
+        text,
+        user: currentUser.name,
+        role: currentUser.type,
+        ts: Date.now()
+    });
+    saveAll();
+    renderFeedbackPage();
+}
+
+function deleteFeedback(id) {
+    if (!currentUser) return alert('请先登录');
+    const entryIndex = feedbackEntries.findIndex(item => item.id === id);
+    if (entryIndex === -1) return alert('未找到该反馈');
+    const entry = feedbackEntries[entryIndex];
+    if (!(isAdmin || isSuper || entry.user === currentUser.name)) return alert('你没有权限删除该反馈');
+    if (!confirm('确认删除这条意见吗？删除后无法恢复。')) return;
+    feedbackEntries.splice(entryIndex, 1);
+    saveAll();
+    renderFeedbackPage();
+}
+
+function editFeedback(id) {
+    if (!currentUser) return alert('请先登录');
+    const entry = feedbackEntries.find(item => item.id === id);
+    if (!entry) return alert('未找到该反馈');
+    if (!(isAdmin || isSuper || entry.user === currentUser.name)) return alert('你没有权限编辑该反馈');
+    const newContent = prompt('编辑你的意见内容：', entry.content);
+    if (newContent === null) return;
+    const trimmed = String(newContent).trim();
+    if (!trimmed) return alert('意见内容不能为空');
+    entry.content = trimmed;
+    entry.ts = Date.now();
+    saveAll();
+    renderFeedbackPage();
+}
+
+function toggleFeedbackStatus(id) {
+    if (!currentUser || !(isAdmin || isSuper)) return alert('仅管理员和大管理可操作状态');
+    const entry = feedbackEntries.find(item => item.id === id);
+    if (!entry) return alert('未找到该反馈');
+    entry.status = entry.status === '已解决' ? '未解决' : '已解决';
+    saveAll();
+    renderFeedbackPage();
 }
 
 // 处理我的主页按钮点击：添加效果后打开教师主页

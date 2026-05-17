@@ -302,6 +302,7 @@ async function initApp() {
     followCounts = base.followCounts || {};
     inviteCodes = base.inviteCodes || [];
     teacherCategories = base.teacherCategories || [];
+    feedbackEntries = base.feedbackEntries || [];
     rankReasons = base.rankReasons || {};
     userSchedules = base.userSchedules || {};
     lastLoginAt = base.lastLoginAt || {};

@@ -144,9 +144,72 @@ button {
     margin-top: 15px;
 }
 
+/* 增强交互反馈 */
+.btn-ui-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(124,179,41,0.18);
+}
+
+.btn-ui-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+}
+
+/* 输入聚焦样式 */
+input:focus, textarea:focus, select:focus {
+    border-color: rgba(124,179,41,0.9);
+    box-shadow: 0 6px 18px rgba(124,179,41,0.06);
+}
+
+/* 全局更柔和的按钮与控件圆角 */
+button, input, select, textarea {
+    border-radius: 12px;
+}
+
+/* 顶部 header 视觉增强 */
+.header {
+    background: linear-gradient(90deg, rgba(255,255,255,0.95), rgba(250,255,238,0.95));
+    border-bottom: 1px solid rgba(0,0,0,0.03);
+}
+
+.nav a {
+    padding: 8px 12px;
+    border-radius: 10px;
+}
+
+.nav a:hover { background: rgba(244,255,222,0.8); }
+
+/* 占位符与细节 */
+::placeholder { color: #9aaea0; opacity: 1; }
+
+/* 微交互动效 */
+.nav a {
+    transition: background 0.18s, color 0.18s, transform 0.18s;
+}
+
+.nav a:active { transform: translateY(1px); }
+
+/* 页面容器内卡片统一间距 */
+.rank-card, .tool-card, .feedback-card {
+    transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+.rank-card:hover, .feedback-card:hover { transform: translateY(-4px); }
+
+/* 提交按钮在feedback区域更加醒目 */
+#feedbackSubmitBtn {
+    padding: 10px 18px;
+    border-radius: 12px;
+    font-weight: 700;
+}
+
+/* 使整体更柔和的字体显示 */
+body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
 /* 2.3 通用表单 */
 input,
-select {
+select,
+textarea {
     width: 100%;
     padding: 12px;
     margin: 8px 0;
