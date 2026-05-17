@@ -1,0 +1,361 @@
+/* ========================================
+   7. 排行榜 / 搜索 / 标签 / 通知
+======================================== */
+
+/* 7.1 搜索结果与通知 */
+.search-results {
+    width: 100%;
+    max-width: 900px;
+    margin: 10px auto 0;
+    background: rgba(255,255,255,0.9);
+    border: 1px solid #eee;
+    border-radius: 12px;
+    padding: 8px;
+    display: none;
+}
+
+.search-item {
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.search-item:hover {
+    background: #f3fbe6;
+}
+
+.search-type {
+    font-size: 11px;
+    color: #555;
+    margin-right: 8px;
+    background: #f1f3f5;
+    padding: 2px 6px;
+    border-radius: 8px;
+}
+
+.notify-bar {
+    background: #fffbe6;
+    border: 1px solid #ffe58f;
+    padding: 10px 14px;
+    border-radius: 12px;
+    margin: 0 auto 15px;
+    max-width: 1000px;
+    display: none;
+}
+
+/* 7.2 标签筛选 */
+.tag-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 10px 0;
+}
+
+.tag-filter {
+    background: #f1f3f5;
+    border-radius: 999px;
+    padding: 2px 8px;
+    font-size: 10px;
+    cursor: pointer;
+}
+
+.tag-filter.active {
+    background: #e8f5e9;
+    color: #2f7d32;
+    font-weight: bold;
+}
+
+.tag-filter-actions {
+    display: flex;
+    gap: 6px;
+}
+
+/* 7.3 排行榜 */
+.rank-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 15px;
+    margin: 10px 0 20px;
+}
+
+.rank-card {
+    background: white;
+    border-radius: 16px;
+    padding: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.rank-tabs {
+    display: flex;
+    gap: 8px;
+    margin: 6px 0;
+}
+
+.rank-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    padding: 6px 0;
+    border-bottom: 1px dashed #eee;
+    align-items: center;
+}
+
+.rank-reason-btn {
+    background: #eef6ff;
+    color: #1c7ed6;
+    border-radius: 6px;
+    padding: 2px 6px;
+    font-size: 11px;
+}
+
+.rank-reason-text {
+    font-size: 11px;
+    color: #666;
+    margin-top: 4px;
+}
+
+.rank-reason-meta {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 11px;
+    color: #888;
+    margin-top: 4px;
+}
+
+.rank-like-btn {
+    background: #fff4e6;
+    color: #d9480f;
+    border-radius: 6px;
+    padding: 2px 6px;
+    font-size: 11px;
+}
+
+
+/* ========================================
+   9. 弹窗模块
+======================================== */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 20px;
+}
+
+.modal-content {
+    background: white;
+    border-radius: 28px;
+    width: 95%;
+    max-width: 1100px;
+    padding: 25px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    position: relative;
+}
+
+.modal-content textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 10px;
+    border: 2px solid #eef2e6;
+    border-radius: 12px;
+    box-sizing: border-box;
+    outline: none;
+    font-family: inherit;
+}
+
+.modal-close {
+    position: absolute;
+    right: 16px;
+    top: 16px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 16px;
+}
+
+.modal-scroll-area {
+    overflow-y: auto;
+    flex: 1;
+    margin: 15px 0;
+    padding-right: 10px;
+    border: 1px solid #f0f0f0;
+    border-radius: 10px;
+}
+
+
+/* ========================================
+   10. 聊天小窗
+======================================== */
+.chat-widget {
+    position: fixed;
+    right: 15px;
+    bottom: 15px;
+    z-index: 10002;
+    width: 220px;
+}
+
+.chat-mini {
+    background: white;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    padding: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    cursor: pointer;
+}
+
+.chat-expand {
+    display: none;
+    background: white;
+    border: 1px solid #eee;
+    border-radius: 12px;
+    padding: 8px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+}
+
+.chat-messages {
+    max-height: 220px;
+    overflow: hidden;
+    font-size: 12px;
+}
+
+.chat-msg {
+    margin-bottom: 6px;
+    opacity: 0.95;
+    transition: opacity 0.3s;
+}
+
+.chat-input {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.chat-input input {
+    margin: 0;
+}
+
+
+/* ========================================
+   11. 音乐控件
+======================================== */
+#musicCtrl {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    border: 2px solid var(--primary);
+    touch-action: none;
+    animation: rotateDisc 5s linear infinite;
+    animation-play-state: paused;
+}
+
+
+/* ========================================
+   12. 响应式适配
+======================================== */
+
+/* 12.1 平板及中等屏幕 */
+@media (max-width: 900px) {
+    .modal-content {
+        max-width: 95vw;
+    }
+}
+
+/* 12.2 手机端 */
+@media (max-width: 600px) {
+    .rank-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .rank-grid .rank-card {
+        padding: 10px;
+        min-width: 0;
+        font-size: 12px;
+    }
+
+    .rank-grid .rank-item {
+        font-size: 11px;
+        padding: 5px 0;
+    }
+
+    #musicCtrl {
+        top: auto;
+        bottom: 88px;
+        right: 10px;
+        width: 44px;
+        height: 44px;
+        font-size: 22px;
+    }
+
+    .chat-widget {
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        max-width: none;
+        padding: 0;
+    }
+
+    .chat-mini {
+        margin: 0 12px 10px;
+        padding: 10px 12px;
+        font-size: 13px;
+        border-radius: 12px;
+        text-align: center;
+    }
+
+    .chat-expand {
+        position: fixed;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100% !important;
+        max-height: min(52vh, 420px);
+        border-radius: 16px 16px 0 0;
+        padding: 12px 12px calc(12px + env(safe-area-inset-bottom));
+        box-shadow: 0 -6px 24px rgba(0,0,0,0.12);
+        box-sizing: border-box;
+        z-index: 10003;
+    }
+
+    .chat-messages {
+        max-height: min(200px, 32vh);
+        overflow-y: auto;
+    }
+
+    .modal {
+        padding: 10px;
+    }
+
+    .modal-content {
+        max-height: 90vh;
+        border-radius: 16px;
+        padding: 16px;
+    }
+
+    #adminBtnS {
+        width: 100% !important;
+        max-width: none;
+        box-sizing: border-box;
+    }
+}
