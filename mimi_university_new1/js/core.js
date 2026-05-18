@@ -184,7 +184,7 @@ function normalizeData() {
     });
     reactions = reactions || {};
     followCounts = followCounts || {};
-    inviteCodes = (inviteCodes || []).filter(c => typeof c === "string").map(c => c.replace(/\s+/g, "").toUpperCase());
+    inviteCodes = (inviteCodes || []).filter(c => typeof c === "string").map(c => normalizeInviteCode(c));
     if (!Array.isArray(teacherCategories) || teacherCategories.length === 0) teacherCategories = ["默认"];
     feedbackEntries = Array.isArray(feedbackEntries) ? feedbackEntries : [];
     feedbackEntries = feedbackEntries.map(e => {
@@ -226,6 +226,26 @@ function normalizeData() {
     });
     lastLoginAt = lastLoginAt || {};
     chatMessages = Array.isArray(chatMessages) ? chatMessages : [];
+}
+
+function normalizeInviteCode(code) {
+    return String(code || "").replace(/\s+/g, "").toUpperCase();
+}
+
+/** 邀请码是否仍可用（未消耗） */
+function isInviteCodeAvailable(code) {
+    const target = normalizeInviteCode(code);
+    if (!target) return false;
+    return inviteCodes.some(c => normalizeInviteCode(c) === target);
+}
+
+/** 用一个销毁一个：校验通过则从列表移除，返回是否成功消耗 */
+function consumeInviteCode(code) {
+    const target = normalizeInviteCode(code);
+    if (!target) return false;
+    const before = inviteCodes.length;
+    inviteCodes = inviteCodes.filter(c => normalizeInviteCode(c) !== target);
+    return inviteCodes.length < before;
 }
 
 function saveAll() {

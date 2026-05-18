@@ -297,8 +297,8 @@ function generateInviteCode() {
     let code;
     do {
         code = Math.random().toString(36).slice(2, 8).toUpperCase();
-    } while (inviteCodes.includes(code));
-    code = code.replace(/\s+/g, "").toUpperCase();
+    } while (inviteCodes.some(c => normalizeInviteCode(c) === code));
+    code = normalizeInviteCode(code);
     inviteCodes.push(code);
     saveAll();
     renderInviteList();

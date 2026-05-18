@@ -293,7 +293,14 @@ async function initApp() {
     let base = localState || getDefaultState();
     if (supabaseClient) {
         const cloud = await loadCloudState();
-        if (cloud) base = cloud;
+        if (cloud) {
+            if (localState) {
+                // 邀请码以本地为准，避免云端旧数据把「已用完」的码复活
+                base = { ...cloud, inviteCodes: localState.inviteCodes ?? cloud.inviteCodes };
+            } else {
+                base = cloud;
+            }
+        }
     }
     userDB = base.userDB || userDB;
     teachers = base.teachers || teachers;

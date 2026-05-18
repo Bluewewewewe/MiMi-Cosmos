@@ -88,30 +88,33 @@ function handleRegister() {
     const p = document.getElementById("rPass").value;
     const p2 = document.getElementById("rPass2").value;
     const t = document.getElementById("rRole").value;
-    const invite = document.getElementById("rInvite").value.replace(/\s+/g, "").toUpperCase();
+    const invite = normalizeInviteCode(document.getElementById("rInvite").value);
 
     if (!u || !p || p !== p2) return alert("请检查输入信息");
+    if (userDB[u]) return alert("用户名已存在，请更换昵称");
 
     const passRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/;
     if (!passRegex.test(p)) return alert("密码需至少8位，且包含数字和字母");
 
     if (t === "teacher") {
         if (!invite) return alert("请输入老师邀请码");
-        if (!inviteCodes.includes(invite)) return alert("邀请码无效或已使用");
-        inviteCodes = inviteCodes.filter(c => c !== invite);
-        saveAll();
-        if (typeof renderInviteList === "function") renderInviteList();
+        if (!isInviteCodeAvailable(invite)) return alert("邀请码无效或已使用");
     }
 
     userDB[u] = { uid: "UID"+Math.floor(1000+Math.random()*9000), pass: p, email: em, type: t };
 
     if (t === "teacher") {
+        if (!consumeInviteCode(invite)) {
+            delete userDB[u];
+            return alert("邀请码无效或已使用");
+        }
         const newTeacher = { id: "t"+Date.now(), name: u, sub: "未设置", ava: "", links: [], signature: "", category: "默认" };
         teachers.push(newTeacher);
         userDB[u].teacherId = newTeacher.id;
     }
 
     saveAll();
+    if (typeof renderInviteList === "function") renderInviteList();
     alert("注册成功！");
     switchAuthTab("L");
 }
