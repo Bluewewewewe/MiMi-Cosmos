@@ -47,6 +47,7 @@ function handleLogin() {
     isSuper = (r === "super");
     isTeacher = (r === "teacher");
     currentUser = { name: u, type: r, uid: userDB[u].uid, teacherId: userDB[u].teacherId || null };
+    sessionStorage.setItem("mimi_current_user", JSON.stringify({ name: u, type: r, uid: userDB[u].uid }));
 
     if (isTeacher && !currentUser.teacherId) {
         const newTeacher = { id: "t"+Date.now(), name: u, sub: "未设置", ava: "", links: [], signature: "", category: "默认" };
@@ -193,6 +194,7 @@ function autoLogin() {
     isSuper = (r === "super");
     isTeacher = (r === "teacher");
     currentUser = { name: u, type: r, uid: userDB[u].uid, teacherId: userDB[u].teacherId || null };
+    sessionStorage.setItem("mimi_current_user", JSON.stringify({ name: u, type: r, uid: userDB[u].uid }));
 
     if (isTeacher && !currentUser.teacherId) {
         const newTeacher = { id: "t"+Date.now(), name: u, sub: "未设置", ava: "", links: [], signature: "", category: "默认" };

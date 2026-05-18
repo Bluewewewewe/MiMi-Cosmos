@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="css/schedule.css">
 <link rel="stylesheet" href="css/teacher.css">
 <link rel="stylesheet" href="css/extra.css">
+<link rel="stylesheet" href="css/workshop.css">
 <style>
     /* 按钮被点击时的样式：绿色背景，白色文字，持续300ms */
     .btn-active {
@@ -110,6 +111,7 @@
             <a id="navS" class="active" onclick="changePage('S')">课程表</a>
             <a id="navT" onclick="changePage('T')">教师档案</a>
             <a id="navR" onclick="changePage('R')">排行榜</a>
+            <a id="navW" onclick="changePage('W')">米米小作坊</a>
         </div>
 
         <div>
@@ -268,6 +270,39 @@
                 <button class="btn-ui-secondary" style="margin-left:auto;" onclick="clearFeedbackFilters()">清空筛选</button>
             </div>
             <div id="feedbackList" style="display:grid; gap:12px; margin-top:14px;"></div>
+        </div>
+    </div>
+
+    <!-- 4.6 米米小作坊 -->
+    <div id="pageW" class="container ws-page" style="display:none;">
+        <div class="ws-page-toolbar">
+            <h3 style="margin:0;">🧵 米米小作坊</h3>
+            <div class="ws-page-actions">
+                <button class="btn-ui-secondary" style="padding:6px 12px;font-size:11px;" onclick="wsOpenLeaderApply()">团长申请</button>
+                <button id="wsListBtn" class="btn-ui-primary" style="padding:6px 12px;font-size:11px;display:none;" onclick="wsOpenListModal()">我要上架</button>
+                <button id="wsAdminBtn" class="btn-ui-secondary" style="padding:6px 12px;font-size:11px;display:none;" onclick="wsOpenAdmin()">管理后台</button>
+            </div>
+        </div>
+        <div class="ws-notice-wrap">
+            <div class="ws-notice-card" id="wsNoticeCard">
+                <img class="ws-notice-img" id="wsNoticeImg" alt="">
+                <div class="ws-notice-body">
+                    <span class="ws-notice-tag" id="wsNoticeTag">通知</span>
+                    <span class="ws-notice-name" id="wsNoticeName">暂无推荐</span>
+                </div>
+            </div>
+            <div class="ws-carousel-dots" id="wsCarouselDots"></div>
+        </div>
+        <div id="wsWantBar" class="ws-want-bar" style="display:none;"></div>
+        <div class="ws-layout">
+            <aside class="ws-cat-side">
+                <b class="ws-cat-side-title">分类</b>
+                <div id="wsCatTree" class="ws-cat-tree"></div>
+            </aside>
+            <div class="ws-main-col">
+                <div id="wsGroupTabs" class="ws-group-tabs"></div>
+                <div id="wsProductGrid" class="ws-product-grid"></div>
+            </div>
         </div>
     </div>
 </div>
@@ -513,6 +548,142 @@
     </div>
 </div>
 
+
+<!-- 米米小作坊弹窗 -->
+<div id="modalWsDisclaimer" class="modal">
+    <div class="modal-content" style="max-width:480px;">
+        <h3>米米宇宙免责说明</h3>
+        <div id="wsDisclaimerBody" class="ws-disclaimer-body"></div>
+        <p id="wsDisclaimerHint" class="ws-disclaimer-hint">请滚动至底部阅读全文</p>
+        <button id="wsDisclaimerOk" class="btn-ui-secondary" style="width:100%;" disabled onclick="wsCloseDisclaimer()">确定进入</button>
+    </div>
+</div>
+
+<!-- 团长申请 -->
+<div id="modalWsLeaderApply" class="modal">
+    <div class="modal-content" style="max-width:440px;">
+        <h3>团长申请</h3>
+        <p style="font-size:12px;color:#666;">请下载说明文档填写后，发送至下方邮箱（内容占位，待确定）</p>
+        <a id="wsApplyDoc" href="#" target="_blank" class="btn-ui-secondary" style="display:block;text-align:center;margin:10px 0;">📄 团长申请说明文档（占位）</a>
+        <p id="wsApplyEmail" style="font-size:13px;background:#f8ffe6;padding:10px;border-radius:8px;"></p>
+        <textarea id="wsApplyNote" placeholder="在此简述申请说明、拟开团名（最多2个团）等…" style="min-height:80px;"></textarea>
+        <button class="btn-ui-primary" style="width:100%;margin-top:8px;" onclick="wsSubmitLeaderApply()">提交申请</button>
+        <button class="btn-ui-secondary" style="width:100%;margin-top:8px;" onclick="closeM('modalWsLeaderApply')">关闭</button>
+    </div>
+</div>
+
+<!-- 上架：步骤1 -->
+<div id="modalWsList" class="modal">
+    <div class="modal-content" style="max-width:520px;max-height:90vh;overflow-y:auto;">
+        <h3>我要上架</h3>
+        <div id="wsListStep1" class="ws-form-step active">
+            <label>团名</label>
+            <select id="wsListGroup" onchange="wsOnListGroupChange()"></select>
+            <div id="wsListExpireHint" class="ws-expire-hint"></div>
+            <label>制品名</label>
+            <input id="wsListName" placeholder="制品名称">
+            <label>大类 / 小类</label>
+            <select id="wsListMajor" onchange="wsOnListMajorChange()"></select>
+            <select id="wsListMinor"></select>
+            <label>制品图片</label>
+            <div id="wsListImageWrap">
+                <input type="file" accept="image/*" onchange="wsReadFileAsDataURL(this, d=>{wsListDraft.image=d; document.getElementById('wsListImgPrev').src=d;})">
+                <img id="wsListImgPrev" style="max-width:100%;max-height:120px;margin-top:8px;border-radius:8px;display:block;">
+            </div>
+            <label>制品介绍（选填）</label>
+            <textarea id="wsListDesc" placeholder="简要介绍"></textarea>
+            <button class="btn-ui-primary" style="width:100%;margin-top:12px;" onclick="wsListNextStep()">下一步</button>
+        </div>
+        <div id="wsListStep2" class="ws-form-step">
+            <label><input type="checkbox" id="wsListHasQa" onchange="wsToggleListQa()"> 设置验证问题（勾选后需填写问题与答案才能展示联系方式）</label>
+            <label>联系方式图片（二维码等，可随时在重新上架时更新）</label>
+            <input type="file" accept="image/*" onchange="wsReadFileAsDataURL(this, d=>{wsListDraft.contactImage=d; document.getElementById('wsListContactPrev').src=d;})">
+            <img id="wsListContactPrev" style="max-width:100%;max-height:120px;margin-top:8px;border-radius:8px;display:block;">
+            <div id="wsListQaBlock" class="ws-qa-block" style="display:none;">
+                <p class="ws-qa-hint">请设置购买者需要回答的问题，答对后才显示联系方式。</p>
+                <label>输入问题</label>
+                <input id="wsListQuestion" placeholder="例如：本团截团日期是？">
+                <label>答案</label>
+                <input id="wsListAnswer" placeholder="与问题对应的准确答案">
+            </div>
+            <div id="wsListQaConfirmRow" style="display:none;margin-top:8px;">
+                <button class="btn-ui-secondary" onclick="wsConfirmQa()">确认问题与答案已填写完成</button>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:12px;">
+                <button class="btn-ui-secondary" style="flex:1;" onclick="wsListPrevStep()">上一步</button>
+                <button class="btn-ui-primary" style="flex:1;" onclick="wsSubmitList()">确认上架</button>
+            </div>
+        </div>
+        <button class="btn-ui-secondary" style="width:100%;margin-top:8px;" onclick="closeM('modalWsList')">取消</button>
+    </div>
+</div>
+
+<!-- 制品详情 -->
+<div id="modalWsProduct" class="modal">
+    <div class="modal-content" style="max-width:480px;max-height:88vh;overflow-y:auto;text-align:center;">
+        <h3 id="wsDetailTitle"></h3>
+        <p id="wsDetailGroup" style="font-size:12px;color:#888;"></p>
+        <img id="wsDetailImg" class="ws-detail-img" alt="">
+        <p id="wsDetailDesc" style="text-align:left;font-size:13px;margin:12px 0;"></p>
+        <div id="wsDetailRelated"></div>
+        <button id="wsDetailWantBtn" class="btn-ui-secondary" style="width:100%;margin:10px 0;" onclick="wsToggleWant()">🤍 想要</button>
+        <div id="wsDetailQaBlock" style="display:none;text-align:left;">
+            <p><b id="wsDetailQuestion"></b></p>
+            <input id="wsDetailAnswerInp" placeholder="请输入答案">
+            <button class="btn-ui-primary" style="width:100%;margin-top:6px;" onclick="wsCheckDetailAnswer()">验证答案</button>
+            <p id="wsDetailAnswerErr" class="ws-error-msg"></p>
+        </div>
+        <div id="wsDetailContact" style="text-align:center;"></div>
+        <button class="btn-ui-secondary" style="width:100%;margin-top:10px;" onclick="closeM('modalWsProduct')">关闭</button>
+    </div>
+</div>
+
+<!-- 管理后台 -->
+<div id="modalWsAdmin" class="modal">
+    <div class="modal-dialog-wrap modal-dialog-wrap--admin">
+        <button type="button" class="modal-close-fab" onclick="closeM('modalWsAdmin')" aria-label="关闭">×</button>
+        <div class="modal-content modal-admin-scroll">
+            <h3>小作坊管理后台</h3>
+            <div class="ws-admin-section">
+                <b>待审核团长申请</b>
+                <div id="wsAdminApps"></div>
+            </div>
+            <div class="ws-admin-section">
+                <b>团长列表</b>
+                <div id="wsAdminLeaders"></div>
+            </div>
+            <div class="ws-admin-section">
+                <b>创建团（团长最多2个团）</b>
+                <input id="wsAdminGroupLeader" placeholder="团长用户名">
+                <input id="wsAdminGroupName" placeholder="团名">
+                <input type="date" id="wsAdminGroupStart">
+                <input type="date" id="wsAdminGroupEnd">
+                <input type="number" id="wsAdminGroupMax" placeholder="可上架制品数" value="5" min="1">
+                <button class="btn-ui-primary" style="width:100%;margin-top:6px;" onclick="wsAdminAddGroup()">创建团</button>
+            </div>
+            <div class="ws-admin-section">
+                <b>团列表</b>
+                <div id="wsAdminGroups"></div>
+            </div>
+            <div class="ws-admin-section">
+                <b>分类管理（大类 + 小类，逗号分隔小类）</b>
+                <input id="wsAdminCatName" placeholder="大类名，如：娃娃">
+                <input id="wsAdminCatSubs" placeholder="小类：10cm娃,15cm娃">
+                <button class="btn-ui-secondary" style="width:100%;margin-top:6px;" onclick="wsAdminAddCategory()">添加分类</button>
+                <div id="wsAdminCats" style="margin-top:8px;"></div>
+            </div>
+            <div class="ws-admin-section">
+                <b>制品管理（下架/变灰/主推）</b>
+                <div id="wsAdminProducts"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="core.js"></script>
+
 <!-- ========================================
      8. 聊天组件
 ========================================= -->
@@ -541,6 +712,7 @@
 <script src="js/schedule.js"></script>
 <script src="js/teacher.js"></script>
 <script src="js/extra.js"></script>
+<script src="js/workshop.js"></script>
 
 <!-- 页面加载完成后执行自动登录 -->
 <script>

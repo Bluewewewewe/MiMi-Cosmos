@@ -1,0 +1,357 @@
+/* 米米小作坊（内嵌主站） */
+.ws-page { max-width: 1200px; margin: 0 auto; }
+
+.ws-page-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 14px;
+}
+.ws-page-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* 圆角通知条 */
+.ws-notice-wrap {
+    max-width: 520px;
+    margin: 0 auto 14px;
+    padding: 0 4px;
+}
+.ws-notice-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #fff;
+    border: 2px solid var(--primary);
+    border-radius: 16px;
+    padding: 10px 14px;
+    box-shadow: 0 4px 14px rgba(154, 205, 50, 0.2);
+    cursor: pointer;
+    min-height: 56px;
+    max-height: 72px;
+    overflow: hidden;
+}
+.ws-notice-img {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    object-fit: cover;
+    background: #f0f0f0;
+    flex-shrink: 0;
+}
+.ws-notice-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.ws-notice-tag {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #fff3e0;
+    color: #e65100;
+    width: fit-content;
+}
+.ws-notice-name {
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.ws-carousel-dots {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin-top: 8px;
+}
+.ws-carousel-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #ccc;
+}
+.ws-carousel-dot.active { background: var(--primary-dark); }
+
+.ws-want-bar {
+    background: #fff3e0;
+    border: 1px solid #ffcc80;
+    margin: 0 auto 14px;
+    max-width: 1100px;
+    padding: 8px 12px;
+    border-radius: 14px;
+    font-size: 12px;
+}
+.ws-want-bar b { color: #e65100; }
+.ws-want-chip {
+    display: inline-block;
+    background: white;
+    padding: 3px 8px;
+    border-radius: 999px;
+    margin: 3px 4px 0 0;
+    cursor: pointer;
+    font-size: 11px;
+    border: 1px solid #ffe0b2;
+}
+
+/* 左侧分类树 */
+.ws-layout {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 16px;
+    align-items: start;
+}
+.ws-cat-side {
+    background: white;
+    border-radius: 16px;
+    padding: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    position: sticky;
+    top: 72px;
+}
+.ws-cat-side-title {
+    display: block;
+    font-size: 13px;
+    margin-bottom: 8px;
+    color: var(--primary-dark);
+}
+.ws-cat-tree { font-size: 12px; }
+.ws-cat-item {
+    padding: 8px 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-bottom: 4px;
+}
+.ws-cat-item:hover { background: #f5f5f5; }
+.ws-cat-item.active {
+    background: #e8f5e9;
+    color: var(--primary-dark);
+    font-weight: bold;
+}
+.ws-cat-major {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    margin-bottom: 2px;
+    user-select: none;
+}
+.ws-cat-major:hover { background: #f8f8f8; }
+.ws-cat-major.active { background: #e8f5e9; font-weight: bold; color: var(--primary-dark); }
+.ws-cat-arrow {
+    font-size: 10px;
+    color: #888;
+    transition: transform 0.2s;
+    margin-left: 6px;
+}
+.ws-cat-arrow.open { transform: rotate(180deg); }
+.ws-cat-subs {
+    margin: 0 0 6px 8px;
+    padding-left: 8px;
+    border-left: 2px solid #e8f5e9;
+}
+.ws-cat-sub {
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-bottom: 2px;
+}
+.ws-cat-sub:hover { background: #f5f5f5; }
+.ws-cat-sub.active {
+    background: #f1f8e9;
+    color: var(--primary-dark);
+    font-weight: bold;
+}
+
+.ws-main-col { min-width: 0; }
+.ws-group-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+.ws-group-tab {
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: white;
+    border: 1px solid #ddd;
+    font-size: 12px;
+    cursor: pointer;
+}
+.ws-group-tab.active {
+    background: #e8f5e9;
+    border-color: var(--primary);
+    color: var(--primary-dark);
+    font-weight: bold;
+}
+
+.ws-product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 14px;
+    padding-bottom: 40px;
+}
+.ws-product-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    cursor: pointer;
+    transition: transform 0.2s;
+    position: relative;
+}
+.ws-product-card:hover { transform: translateY(-3px); }
+.ws-product-card.grayed { opacity: 0.45; filter: grayscale(0.8); }
+.ws-product-img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    background: #f5f5f5;
+}
+.ws-product-body { padding: 10px; }
+.ws-product-name {
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.ws-product-meta { font-size: 11px; color: #888; }
+.ws-want-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(255, 255, 255, 0.92);
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+}
+
+.ws-disclaimer-body {
+    max-height: 50vh;
+    overflow-y: auto;
+    padding: 12px;
+    background: #fafafa;
+    border-radius: 12px;
+    font-size: 13px;
+    line-height: 1.7;
+    margin: 12px 0;
+}
+.ws-disclaimer-hint { font-size: 12px; color: #888; text-align: center; }
+.ws-disclaimer-hint.ready { color: var(--primary-dark); font-weight: bold; }
+
+.ws-form-step { display: none; }
+.ws-form-step.active { display: block; }
+.ws-field-error { border-color: var(--danger) !important; background: #fff5f5 !important; }
+.ws-error-msg { color: var(--danger); font-size: 11px; margin-top: 2px; }
+.ws-expire-hint {
+    background: #e7f5ff;
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 12px;
+    margin: 8px 0;
+}
+.ws-qa-block { background: #f8ffe6; padding: 12px; border-radius: 12px; margin-top: 10px; }
+.ws-qa-hint { font-size: 11px; color: #666; margin-bottom: 6px; }
+
+.ws-detail-img {
+    width: 100%;
+    max-height: 240px;
+    object-fit: contain;
+    border-radius: 12px;
+    background: #f5f5f5;
+}
+.ws-related-row {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    margin-top: 10px;
+    padding-bottom: 6px;
+}
+.ws-related-item {
+    flex: 0 0 72px;
+    text-align: center;
+    cursor: pointer;
+    font-size: 10px;
+}
+.ws-related-item img {
+    width: 72px;
+    height: 72px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.ws-admin-section {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px dashed #ddd;
+}
+.ws-list-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 12px;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+/* 独立页 workshop.html 用 */
+.workshop-page { display: none; min-height: 100vh; }
+.workshop-page.active { display: block; }
+
+@media (max-width: 768px) {
+    .ws-layout { grid-template-columns: 1fr; }
+    .ws-cat-side { position: static; }
+    .ws-notice-wrap { max-width: 100%; }
+    .ws-product-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* 管理后台：弹窗外固定关闭按钮 */
+.modal-dialog-wrap {
+    position: relative;
+    width: 95%;
+    max-width: 560px;
+    max-height: 90vh;
+    margin: 0 auto;
+}
+.modal-close-fab {
+    position: fixed;
+    top: max(16px, env(safe-area-inset-top, 0px));
+    right: max(16px, env(safe-area-inset-right, 0px));
+    z-index: 10002;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid #eee;
+    background: #fff;
+    color: #333;
+    font-size: 22px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+    cursor: pointer;
+    padding: 0;
+}
+.modal-close-fab:hover {
+    background: #fff5f5;
+    color: var(--danger);
+    border-color: #ffc9c9;
+}
+.modal-admin-scroll {
+    max-width: 560px;
+    max-height: 90vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    margin: 0;
+}

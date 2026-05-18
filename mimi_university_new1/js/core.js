@@ -373,24 +373,33 @@ function refreshCurrentPage() {
         renderRanks(currentRankMode);
     } else if (currentPage === "F") {
         renderFeedbackPage();
+    } else if (currentPage === "W") {
+        if (typeof wsSyncFromMain === "function") wsSyncFromMain();
+        if (typeof wsRenderAll === "function") wsRenderAll();
     }
 }
 
 function changePage(p) {
-    currentPage = p; // 更新当前页面标识
+    if (p !== "W" && typeof wsLeavePage === "function") wsLeavePage();
+    currentPage = p;
     document.getElementById("pageS").style.display = p === "S" ? "block" : "none";
     document.getElementById("pageT").style.display = p === "T" ? "block" : "none";
     document.getElementById("pageR").style.display = p === "R" ? "block" : "none";
     document.getElementById("pageF").style.display = p === "F" ? "block" : "none";
+    const pageW = document.getElementById("pageW");
+    if (pageW) pageW.style.display = p === "W" ? "block" : "none";
     document.getElementById("navS").className = p === "S" ? "active" : "";
     document.getElementById("navT").className = p === "T" ? "active" : "";
     document.getElementById("navR").className = p === "R" ? "active" : "";
+    const navW = document.getElementById("navW");
+    if (navW) navW.className = p === "W" ? "active" : "";
     if (p === "T") {
         renderTeachers();
         renderInviteList();
     }
     if (p === "R") renderRanks(currentRankMode || "week");
     if (p === "F") renderFeedbackPage();
+    if (p === "W" && typeof wsEnterPage === "function") wsEnterPage();
 }
 
 // 按钮点击效果处理
@@ -604,6 +613,7 @@ function handleLogout() {
     localStorage.removeItem("rememberedUser");
     localStorage.removeItem("rememberedPass");
     localStorage.removeItem("rememberedRole");
+    sessionStorage.removeItem("mimi_current_user");
     setTimeout(() => {
         location.reload();
     }, 300);
