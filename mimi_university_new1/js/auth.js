@@ -18,12 +18,29 @@ function togglePasswordVisibility(inputId) {
     }
 }
 
-function switchAuthTab(m){
-    document.getElementById('loginForm').style.display=m=='L'?'block':'none';
-    document.getElementById('regForm').style.display=m=='R'?'block':'none';
-    document.getElementById('tabL').className=m=='L'?'tab-btn active':'tab-btn';
-    document.getElementById('tabR').className=m=='R'?'tab-btn active':'tab-btn';
-    if (m === 'R') toggleTeacherInvite();
+function switchAuthTab(m) {
+    const isLogin = m === "L";
+    const loginForm = document.getElementById("loginForm");
+    const regForm = document.getElementById("regForm");
+    const tabL = document.getElementById("tabL");
+    const tabR = document.getElementById("tabR");
+    const authBody = document.getElementById("authBody");
+
+    if (loginForm) loginForm.style.display = isLogin ? "block" : "none";
+    if (regForm) regForm.style.display = isLogin ? "none" : "block";
+
+    if (tabL) {
+        tabL.classList.toggle("is-active", isLogin);
+        tabL.setAttribute("aria-selected", isLogin ? "true" : "false");
+    }
+    if (tabR) {
+        tabR.classList.toggle("is-active", !isLogin);
+        tabR.setAttribute("aria-selected", isLogin ? "false" : "true");
+    }
+
+    if (authBody) authBody.dataset.mode = isLogin ? "login" : "register";
+
+    if (!isLogin) toggleTeacherInvite();
 }
 function openForgotModal(){ document.getElementById('forgotModal').style.display='flex'; }
 function sendForgotEmail(){

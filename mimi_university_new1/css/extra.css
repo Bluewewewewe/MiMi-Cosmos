@@ -79,10 +79,12 @@
 }
 
 .rank-card {
-    background: white;
-    border-radius: 16px;
+    background: var(--glass);
+    border-radius: 18px;
     padding: 12px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    box-shadow: 0 8px 28px rgba(66, 165, 245, 0.1);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(10px);
 }
 
 .rank-tabs {
@@ -387,23 +389,7 @@
    11. 音乐控件
 ======================================== */
 #musicCtrl {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 9999;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 30px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    border: 2px solid var(--primary);
-    touch-action: none;
-    animation: rotateDisc 5s linear infinite;
-    animation-play-state: paused;
+    display: none !important;
 }
 
 
@@ -436,14 +422,6 @@
         padding: 5px 0;
     }
 
-    #musicCtrl {
-        top: auto;
-        bottom: 88px;
-        right: 10px;
-        width: 44px;
-        height: 44px;
-        font-size: 22px;
-    }
 
     .chat-widget {
         left: 0;

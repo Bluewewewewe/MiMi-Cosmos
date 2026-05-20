@@ -395,6 +395,7 @@ function refreshCurrentPage() {
         renderFeedbackPage();
     } else if (currentPage === "W") {
         if (typeof wsSyncFromMain === "function") wsSyncFromMain();
+        if (typeof wsUpdateToolbar === "function") wsUpdateToolbar();
         if (typeof wsRenderAll === "function") wsRenderAll();
     }
 }

@@ -40,8 +40,101 @@ function wsDefaultData() {
         leaders: [],
         products: [],
         applications: [],
-        carouselFeatured: []
+        carouselFeatured: [],
+        carouselConfig: { customCount: 0, customIds: [], banners: {} },
+        nextProductCode: 10001
     };
+}
+
+const WS_CAROUSEL_MAX = 5;
+
+function wsFormatCodeFromNum(n) {
+    return "WS-" + String(n).padStart(5, "0");
+}
+
+function wsEnsureProductCodes() {
+    if (!wsData) return;
+    if (typeof wsData.nextProductCode !== "number" || wsData.nextProductCode < 10001) {
+        let max = 10000;
+        (wsData.products || []).forEach((p) => {
+            if (p.codeNum && p.codeNum > max) max = p.codeNum;
+        });
+        wsData.nextProductCode = max + 1;
+    }
+    (wsData.products || []).forEach((p) => {
+        if (!p.codeNum) {
+            p.codeNum = wsData.nextProductCode++;
+            p.code = wsFormatCodeFromNum(p.codeNum);
+        } else if (!p.code) {
+            p.code = wsFormatCodeFromNum(p.codeNum);
+        }
+    });
+}
+
+function wsAllocateProductCode() {
+    wsEnsureProductCodes();
+    const codeNum = wsData.nextProductCode++;
+    return { codeNum, code: wsFormatCodeFromNum(codeNum) };
+}
+
+function wsCanSeeProductCode() {
+    wsSyncFromMain();
+    return wsIsAdmin || wsIsLeader();
+}
+
+function wsProductCodeHtml(p) {
+    if (!wsCanSeeProductCode() || !p?.code) return "";
+    return `<span class="ws-product-code">${wsEscape(p.code)}</span>`;
+}
+
+function wsFindProductByCode(input) {
+    wsEnsureProductCodes();
+    const raw = String(input || "").trim().toUpperCase();
+    if (!raw) return null;
+    const num = parseInt(raw.replace(/^WS-?/i, ""), 10);
+    if (!num || Number.isNaN(num)) return null;
+    return wsData.products.find((p) => p.codeNum === num) || null;
+}
+
+function wsEnsureCarouselConfig() {
+    if (!wsData) return;
+    const legacy = Array.isArray(wsData.carouselFeatured) ? wsData.carouselFeatured : [];
+    if (!wsData.carouselConfig || typeof wsData.carouselConfig !== "object") {
+        wsData.carouselConfig = {
+            customCount: legacy.length ? Math.min(WS_CAROUSEL_MAX, legacy.length) : 0,
+            customIds: legacy.slice(0, WS_CAROUSEL_MAX)
+        };
+    }
+    const cfg = wsData.carouselConfig;
+    if (typeof cfg.customCount !== "number") {
+        if (cfg.mode === "custom") {
+            cfg.customCount = Math.min(WS_CAROUSEL_MAX, (cfg.customIds || []).length || WS_CAROUSEL_MAX);
+        } else if (cfg.mode === "want_rank") {
+            cfg.customCount = 0;
+        } else {
+            cfg.customCount = Math.min(WS_CAROUSEL_MAX, (cfg.customIds || []).length);
+        }
+    }
+    cfg.customCount = Math.max(0, Math.min(WS_CAROUSEL_MAX, Math.round(cfg.customCount)));
+    cfg.customIds = (cfg.customIds || [])
+        .filter((id, i, arr) => id && arr.indexOf(id) === i)
+        .slice(0, cfg.customCount);
+    delete cfg.mode;
+    if (!cfg.banners || typeof cfg.banners !== "object") cfg.banners = {};
+    wsData.carouselFeatured = [...cfg.customIds];
+}
+
+function wsCarouselBannerSrc(productId) {
+    wsEnsureCarouselConfig();
+    const banners = wsData.carouselConfig.banners || {};
+    if (productId && banners[productId]) return banners[productId];
+    const p = wsData.products.find((x) => x.id === productId);
+    return (p && p.image) || "";
+}
+
+function wsCarouselWantSlots() {
+    wsEnsureCarouselConfig();
+    return WS_CAROUSEL_MAX - (wsData.carouselConfig.customCount || 0);
 }
 
 function wsLoad() {
@@ -53,9 +146,12 @@ function wsLoad() {
     }
     if (!wsData.categories?.length) wsData.categories = wsDefaultData().categories;
     if (!wsData.disclaimer) wsData.disclaimer = wsDefaultData().disclaimer;
+    wsEnsureCarouselConfig();
+    wsEnsureProductCodes();
 }
 
 function wsSave() {
+    wsEnsureCarouselConfig();
     localStorage.setItem(WS_STORAGE_KEY, JSON.stringify(wsData));
 }
 
@@ -134,24 +230,53 @@ function wsProductWantCount(p) {
     return p.wantCount || 0;
 }
 
-function wsTopWantProducts(n = 3) {
+function wsWantRankProducts(excludeIds, n) {
+    const used = new Set(excludeIds || []);
     return [...wsVisibleProducts()]
+        .filter((p) => !used.has(p.id))
         .sort((a, b) => wsProductWantCount(b) - wsProductWantCount(a))
         .slice(0, n);
 }
 
 function wsCarouselItems() {
-    const visible = wsVisibleProducts();
-    const hot = wsTopWantProducts(5).map((p) => ({ type: "hot", product: p }));
-    const featured = (wsData.carouselFeatured || [])
-        .map((id) => visible.find((p) => p.id === id))
-        .filter(Boolean)
-        .map((p) => ({ type: "featured", product: p }));
-    const map = new Map();
-    [...featured, ...hot].forEach((item) => {
-        if (item.product && !map.has(item.product.id)) map.set(item.product.id, item);
+    wsEnsureCarouselConfig();
+    const cfg = wsData.carouselConfig;
+    const customCount = cfg.customCount || 0;
+    const customIds = (cfg.customIds || []).slice(0, customCount);
+    const visMap = new Map(wsVisibleProducts().map((p) => [p.id, p]));
+    const items = [];
+    const used = new Set();
+
+    customIds.forEach((id) => {
+        const p = visMap.get(id);
+        if (p && !used.has(p.id)) {
+            items.push({ type: "featured", product: p });
+            used.add(p.id);
+        }
     });
-    return Array.from(map.values());
+
+    const wantSlots = WS_CAROUSEL_MAX - customCount;
+    if (wantSlots > 0) {
+        wsWantRankProducts(customIds, wantSlots).forEach((p) => {
+            items.push({ type: "hot", product: p });
+        });
+    }
+
+    return items;
+}
+
+function wsIsInCarouselCustom(pid) {
+    wsEnsureCarouselConfig();
+    return (wsData.carouselConfig.customIds || []).includes(pid);
+}
+
+function wsCarouselModeLabel() {
+    wsEnsureCarouselConfig();
+    const n = wsData.carouselConfig.customCount || 0;
+    const w = WS_CAROUSEL_MAX - n;
+    if (n === 0) return `想要榜×${w}`;
+    if (w === 0) return `自定义×${n}`;
+    return `${n}自定义+${w}想要榜`;
 }
 
 function wsReadFileAsDataURL(input, cb) {
@@ -217,6 +342,7 @@ function wsSyncFromMain() {
 }
 
 function wsUpdateToolbar() {
+    wsSyncFromMain();
     const listBtn = document.getElementById("wsListBtn");
     const adminBtn = document.getElementById("wsAdminBtn");
     if (listBtn) listBtn.style.display = wsIsLeader() ? "inline-block" : "none";
@@ -229,6 +355,7 @@ function wsEnterPage() {
         if (typeof changePage === "function") changePage("S");
         return;
     }
+    wsLoad();
     wsSyncFromMain();
     wsUpdateToolbar();
     wsShowDisclaimer();
@@ -241,8 +368,16 @@ function wsLeavePage() {
 
 /* ========== 免责弹窗 ========== */
 function wsShowDisclaimer() {
+    if (sessionStorage.getItem("ws_disclaimer_ok")) {
+        wsRenderAll();
+        return;
+    }
     const body = document.getElementById("wsDisclaimerBody");
     const btn = document.getElementById("wsDisclaimerOk");
+    if (!body || !btn) {
+        wsRenderAll();
+        return;
+    }
     body.textContent = wsData.disclaimer;
     body.onscroll = wsCheckDisclaimerScroll;
     btn.disabled = true;
@@ -269,6 +404,7 @@ function wsCheckDisclaimerScroll() {
 }
 
 function wsCloseDisclaimer() {
+    sessionStorage.setItem("ws_disclaimer_ok", "1");
     closeM("modalWsDisclaimer");
     wsRenderAll();
 }
@@ -276,18 +412,33 @@ function wsCloseDisclaimer() {
 /* ========== 渲染 ========== */
 function wsRenderAll() {
     wsRenderCarousel();
-    wsRenderWantBar();
     wsRenderCategoryTree();
     wsRenderGroupTabs();
     wsRenderProductGrid();
 }
 
+function wsUpdateFeaturedHint() {
+    const hint = document.querySelector(".ws-featured-hint");
+    if (!hint) return;
+    wsEnsureCarouselConfig();
+    const n = wsData.carouselConfig.customCount || 0;
+    const w = WS_CAROUSEL_MAX - n;
+    hint.textContent =
+        n === 0
+            ? `想要榜 TOP${w} · 自动更新 · 点击查看`
+            : w === 0
+                ? `管理员自定义 ${n} 个 · 点击查看`
+                : `${n} 个自定义 + ${w} 个想要榜 · 点击查看`;
+}
+
 function wsRenderCarousel() {
+    wsUpdateFeaturedHint();
     const items = wsCarouselItems();
     const card = document.getElementById("wsNoticeCard");
     const img = document.getElementById("wsNoticeImg");
     const tagEl = document.getElementById("wsNoticeTag");
     const nameEl = document.getElementById("wsNoticeName");
+    const descEl = document.getElementById("wsNoticeDesc");
     const dots = document.getElementById("wsCarouselDots");
     if (!card || !img || !tagEl || !nameEl) return;
     if (!items.length) {
@@ -295,17 +446,29 @@ function wsRenderCarousel() {
         img.style.display = "none";
         tagEl.textContent = "通知";
         nameEl.textContent = "暂无推荐";
+        if (descEl) descEl.textContent = "上架商品后将在此展示";
         card.onclick = null;
+        card.classList.remove("ws-notice-has-img");
+        card.classList.add("ws-notice-empty");
         if (dots) dots.innerHTML = "";
         return;
     }
+    card.classList.remove("ws-notice-empty");
     if (wsCarouselIndex >= items.length) wsCarouselIndex = 0;
     const item = items[wsCarouselIndex];
     const p = item.product;
-    img.style.display = "block";
-    img.src = p.image || "";
-    tagEl.textContent = item.type === "featured" ? "主推" : "热门";
+    const bannerSrc = wsCarouselBannerSrc(p.id);
+    img.style.display = bannerSrc ? "block" : "none";
+    img.src = bannerSrc;
+    card.classList.toggle("ws-notice-has-img", !!bannerSrc);
+    tagEl.textContent = item.type === "featured" ? "精选" : "热门";
     nameEl.textContent = p.name || "";
+    if (descEl) {
+        const raw = (p.desc || "").trim();
+        descEl.textContent = raw
+            ? (raw.length > 72 ? raw.slice(0, 72) + "…" : raw)
+            : "点击进入查看详情";
+    }
     card.onclick = () => wsOpenProduct(p.id);
     if (dots) {
         dots.innerHTML = items.map((_, i) => `<span class="ws-carousel-dot ${i === wsCarouselIndex ? "active" : ""}"></span>`).join("");
@@ -315,19 +478,6 @@ function wsRenderCarousel() {
         wsCarouselIndex = (wsCarouselIndex + 1) % items.length;
         wsRenderCarousel();
     }, 5000);
-}
-
-function wsRenderWantBar() {
-    const bar = document.getElementById("wsWantBar");
-    const top = wsTopWantProducts(3);
-    if (!top.length) {
-        bar.style.display = "none";
-        return;
-    }
-    bar.style.display = "block";
-    bar.innerHTML = `<b>🔥 想要榜 TOP3：</b>` + top.map((p) =>
-        `<span class="ws-want-chip" onclick="wsOpenProduct('${p.id}')">${wsEscape(p.name)} (${wsProductWantCount(p)})</span>`
-    ).join("");
 }
 
 function wsRenderGroupTabs() {
@@ -360,6 +510,7 @@ function wsRenderProductGrid() {
         const cls = p.status === "gray" ? "grayed" : "";
         return `<div class="ws-product-card ${cls}" onclick="wsOpenProduct('${p.id}')">
             <span class="ws-want-badge">想要 ${wsProductWantCount(p)}</span>
+            ${wsProductCodeHtml(p)}
             <img class="ws-product-img" src="${p.image || ""}" alt="">
             <div class="ws-product-body">
                 <div class="ws-product-name">${wsEscape(p.name)}</div>
@@ -422,7 +573,8 @@ function wsOpenProduct(id) {
     document.getElementById("wsDetailTitle").textContent = p.name;
     document.getElementById("wsDetailImg").src = p.image || "";
     document.getElementById("wsDetailDesc").textContent = p.desc || "暂无介绍";
-    document.getElementById("wsDetailGroup").textContent = g ? `所属团：${g.name}` : "";
+    const codeHint = wsCanSeeProductCode() && p.code ? ` · 编号 ${p.code}` : "";
+    document.getElementById("wsDetailGroup").textContent = (g ? `所属团：${g.name}` : "") + codeHint;
     const wantFlags = JSON.parse(localStorage.getItem(WS_WANT_FLAGS) || "{}");
     const wanted = wsUser && wantFlags[`${wsUser.name}_${p.id}`];
     document.getElementById("wsDetailWantBtn").textContent = `${wanted ? "💖" : "🤍"} 想要 (${wsProductWantCount(p)})`;
@@ -489,18 +641,50 @@ function wsToggleWant() {
     localStorage.setItem(WS_WANT_FLAGS, JSON.stringify(flags));
     wsSave();
     document.getElementById("wsDetailWantBtn").textContent = `💖 想要 (${wsProductWantCount(p)})`;
-    wsRenderWantBar();
     wsRenderCarousel();
     wsRenderProductGrid();
 }
 
 /* ========== 团长申请 ========== */
+function wsRenderLeaderApplyStatus() {
+    const box = document.getElementById("wsLeaderApplyStatus");
+    if (!box) return;
+    wsSyncFromMain();
+    if (wsIsLeader()) {
+        box.innerHTML = `<div class="ws-apply-status ws-apply-status--ok">✅ 您已是团长，可使用「我要上架」发布商品。商品编号仅您与管理员可见。</div>`;
+        return;
+    }
+    const pending = (wsData.applications || []).find((a) => a.user === wsUser?.name && a.status === "pending");
+    const approved = (wsData.applications || []).find((a) => a.user === wsUser?.name && a.status === "approved");
+    if (pending) {
+        box.innerHTML = `<div class="ws-apply-status ws-apply-status--pending">⏳ 您已提交团长申请（${wsFormatDate(pending.ts)}），请等待管理员在「管理后台」审核。</div>`;
+        return;
+    }
+    if (approved) {
+        box.innerHTML = `<div class="ws-apply-status ws-apply-status--ok">✅ 申请已通过。若仍看不到「我要上架」，请刷新页面或联系管理员为您创建团。</div>`;
+        return;
+    }
+    box.innerHTML = `<div class="ws-apply-status">填写说明后提交 → 管理员审核 → 开通团长 → 管理员为您「创建团」→ 即可「我要上架」。</div>`;
+}
+
 function wsOpenLeaderApply() {
-    document.getElementById("wsApplyDoc").href = wsData.applyDocUrl || "#";
-    document.getElementById("wsApplyDoc").textContent = "📄 团长申请说明文档（占位）";
-    document.getElementById("wsApplyEmail").textContent = `联系邮箱（占位）：${wsData.applyEmail || "待设置"}`;
-    document.getElementById("wsApplyNote").value = "";
-    document.getElementById("modalWsLeaderApply").style.display = "flex";
+    wsLoad();
+    wsSyncFromMain();
+    if (!wsUser && typeof currentUser !== "undefined" && currentUser) {
+        wsUser = { name: currentUser.name, type: currentUser.type, uid: currentUser.uid };
+    }
+    if (!wsUser) return alert("请先登录");
+    const doc = document.getElementById("wsApplyDoc");
+    const email = document.getElementById("wsApplyEmail");
+    const note = document.getElementById("wsApplyNote");
+    const modal = document.getElementById("modalWsLeaderApply");
+    if (!doc || !email || !note || !modal) return;
+    doc.href = wsData.applyDocUrl || "#";
+    doc.textContent = "📄 团长申请说明文档（占位）";
+    email.textContent = `联系邮箱（占位）：${wsData.applyEmail || "待设置"}`;
+    note.value = "";
+    wsRenderLeaderApplyStatus();
+    modal.style.display = "flex";
 }
 
 function wsSubmitLeaderApply() {
@@ -515,6 +699,7 @@ function wsSubmitLeaderApply() {
     });
     wsSave();
     alert("申请已提交，请等待管理员审核");
+    wsRenderLeaderApplyStatus();
     closeM("modalWsLeaderApply");
 }
 
@@ -633,8 +818,11 @@ function wsSubmitList() {
 
     const gid = document.getElementById("wsListGroup").value;
     const g = wsData.groups.find((x) => x.id === gid);
+    const codeInfo = wsAllocateProductCode();
     const p = {
         id: "p_" + Date.now(),
+        codeNum: codeInfo.codeNum,
+        code: codeInfo.code,
         groupId: gid,
         name: document.getElementById("wsListName").value.trim(),
         desc: document.getElementById("wsListDesc").value.trim(),
@@ -653,16 +841,21 @@ function wsSubmitList() {
     };
     wsData.products.push(p);
     wsSave();
-    alert("上架成功！");
+    alert(`上架成功！\n商品编号：${p.code}\n（仅团长与管理员可见，用于精品推荐配置）`);
     closeM("modalWsList");
     wsRenderAll();
 }
 
 /* ========== 管理后台 ========== */
 function wsOpenAdmin() {
-    if (!wsIsAdmin) return;
+    wsLoad();
+    wsSyncFromMain();
+    wsUpdateToolbar();
+    if (!wsIsAdmin) return alert("仅管理员可进入管理后台");
     wsRenderAdmin();
-    document.getElementById("modalWsAdmin").style.display = "flex";
+    const modal = document.getElementById("modalWsAdmin");
+    if (!modal) return;
+    modal.style.display = "flex";
 }
 
 function wsRenderAdmin() {
@@ -686,12 +879,12 @@ function wsRenderAdmin() {
 
     const products = document.getElementById("wsAdminProducts");
     products.innerHTML = wsData.products.map((p) =>
-        `<div class="ws-list-row"><span>${wsEscape(p.name)} (${wsEscape(p.status)})</span>
+        `<div class="ws-list-row"><span><b>${wsEscape(p.code || "—")}</b> · ${wsEscape(p.name)} (${wsEscape(p.status)})</span>
         <span>
             <button class="btn-ui-secondary" onclick="wsSetProductStatus('${p.id}','active')">上架</button>
             <button class="btn-ui-secondary" onclick="wsSetProductStatus('${p.id}','gray')">变灰</button>
             <button class="btn-ui-tag-del" onclick="wsSetProductStatus('${p.id}','offline')">下架</button>
-            <button class="btn-ui-secondary" onclick="wsToggleFeatured('${p.id}')">${(wsData.carouselFeatured||[]).includes(p.id)?"取消主推":"主推"}</button>
+            <button class="btn-ui-secondary" onclick="wsToggleFeatured('${p.id}')">${wsIsInCarouselCustom(p.id) ? "取消推荐" : "加入推荐"}</button>
         </span></div>`
     ).join("") || "<div style='color:#999;'>暂无制品</div>";
 
@@ -699,7 +892,194 @@ function wsRenderAdmin() {
     cats.innerHTML = wsData.categories.map((c, i) =>
         `<div class="ws-list-row"><span>${wsEscape(c.name)}：${(c.subs||[]).join("、")}</span>
         <button class="btn-ui-tag-del" onclick="wsRemoveCategory(${i})">删除</button></div>`
-    ).join("");
+    ).join("") || "";
+
+    wsRenderAdminCarousel();
+}
+
+function wsSetCarouselCustomCount(count) {
+    if (!wsIsAdmin) return;
+    wsEnsureCarouselConfig();
+    const cfg = wsData.carouselConfig;
+    cfg.customCount = Math.max(0, Math.min(WS_CAROUSEL_MAX, count));
+    cfg.customIds = (cfg.customIds || []).slice(0, cfg.customCount);
+    wsSave();
+    wsRenderAdminCarousel();
+    wsRenderCarousel();
+}
+
+function wsRenderAdminCarousel() {
+    wsEnsureCarouselConfig();
+    const cfg = wsData.carouselConfig;
+    const customCount = cfg.customCount || 0;
+    const wantSlots = WS_CAROUSEL_MAX - customCount;
+    const ids = cfg.customIds || [];
+    const vis = wsVisibleProducts();
+
+    const countSel = document.getElementById("wsAdminCarouselCustomCount");
+    if (countSel) countSel.value = String(customCount);
+
+    const wantLabel = document.getElementById("wsAdminCarouselWantCountLabel");
+    if (wantLabel) {
+        wantLabel.textContent =
+            wantSlots > 0 ? `想要榜：${wantSlots} 个（自动）` : "（全部为自定义，无想要榜位）";
+    }
+
+    const customPanel = document.getElementById("wsAdminCarouselCustom");
+    const wantPanel = document.getElementById("wsAdminCarouselWant");
+    const addRow = document.getElementById("wsAdminCarouselAddRow");
+    if (customPanel) customPanel.style.display = customCount > 0 ? "block" : "none";
+    if (wantPanel) wantPanel.style.display = wantSlots > 0 ? "block" : "none";
+    if (addRow) addRow.style.display = customCount > 0 ? "flex" : "none";
+
+    const listEl = document.getElementById("wsAdminCarouselList");
+    if (listEl) {
+        if (customCount === 0) {
+            listEl.innerHTML = `<div class="ws-admin-carousel-empty">将「自定义数量」设为 1～5 后可添加</div>`;
+        } else if (!ids.length) {
+            listEl.innerHTML = `<div class="ws-admin-carousel-empty">请添加自定义商品（0/${customCount}）</div>`;
+        } else {
+            listEl.innerHTML = ids.map((pid, idx) => {
+                const p = wsData.products.find((x) => x.id === pid);
+                const name = p ? wsEscape(p.name) : "（已下架）";
+                const warn = p && !vis.find((v) => v.id === pid) ? " · 未在售" : "";
+                const codeLabel = p?.code ? ` · ${wsEscape(p.code)}` : "";
+                return `<div class="ws-admin-carousel-slot">
+                    <span class="ws-admin-carousel-idx">${idx + 1}</span>
+                    <span class="ws-admin-carousel-name">${name}${codeLabel}${warn}</span>
+                    <span class="ws-admin-carousel-slot-actions">
+                        <button type="button" class="btn-ui-secondary" ${idx === 0 ? "disabled" : ""} onclick="wsAdminCarouselMove('${pid}',-1)">↑</button>
+                        <button type="button" class="btn-ui-secondary" ${idx >= ids.length - 1 ? "disabled" : ""} onclick="wsAdminCarouselMove('${pid}',1)">↓</button>
+                        <button type="button" class="btn-ui-secondary" onclick="wsAdminCarouselSetBanner('${pid}')">推荐大图</button>
+                        <button type="button" class="btn-ui-tag-del" onclick="wsAdminCarouselRemove('${pid}')">移除</button>
+                    </span>
+                </div>`;
+            }).join("");
+        }
+    }
+
+    const pick = document.getElementById("wsAdminCarouselPick");
+    if (pick) {
+        const options = vis
+            .filter((p) => !ids.includes(p.id))
+            .map((p) => `<option value="${p.id}">${wsEscape(p.code || "")} ${wsEscape(p.name)}（想要 ${wsProductWantCount(p)}）</option>`)
+            .join("");
+        pick.innerHTML =
+            `<option value="">选择商品添加（${ids.length}/${customCount}）</option>` + options;
+        pick.disabled = customCount === 0 || ids.length >= customCount;
+    }
+
+    const preview = document.getElementById("wsAdminCarouselWantPreview");
+    if (preview) {
+        if (wantSlots <= 0) {
+            preview.innerHTML = `<div class="ws-admin-carousel-empty">当前无想要榜位</div>`;
+        } else {
+        const top = wsWantRankProducts(ids, wantSlots);
+        preview.innerHTML = top.length
+            ? top.map((p, i) =>
+                `<div class="ws-admin-carousel-slot"><span class="ws-admin-carousel-idx">${customCount + i + 1}</span>
+                <span class="ws-admin-carousel-name">${wsEscape(p.code || "")} ${wsEscape(p.name)}</span>
+                <span class="ws-admin-carousel-want">想要 ${wsProductWantCount(p)}</span></div>`
+            ).join("")
+            : `<div class="ws-admin-carousel-empty">暂无在售商品或想要数据</div>`;
+        }
+    }
+}
+
+function wsAdminCarouselAddProduct(pid, fromCode) {
+    if (!wsIsAdmin || !pid) return false;
+    wsEnsureCarouselConfig();
+    const cfg = wsData.carouselConfig;
+    if ((cfg.customCount || 0) === 0) {
+        alert("请先将「自定义数量」设为 1 或以上");
+        return false;
+    }
+    const ids = cfg.customIds;
+    if (ids.includes(pid)) {
+        alert("该商品已在自定义列表中");
+        return false;
+    }
+    if (ids.length >= cfg.customCount) {
+        alert(`自定义位已满（${cfg.customCount} 个），请移除后再添加或增加自定义数量`);
+        return false;
+    }
+    ids.push(pid);
+    wsSave();
+    wsRenderAdminCarousel();
+    wsRenderCarousel();
+    if (fromCode) {
+        const inp = document.getElementById("wsAdminCarouselCodeInp");
+        if (inp) inp.value = "";
+    }
+    return true;
+}
+
+function wsAdminCarouselAddByCode() {
+    if (!wsIsAdmin) return;
+    const inp = document.getElementById("wsAdminCarouselCodeInp");
+    const raw = inp?.value?.trim();
+    if (!raw) return alert("请输入商品编号，如 10001 或 WS-10001");
+    const p = wsFindProductByCode(raw);
+    if (!p) return alert("未找到该编号的商品，请确认已上架且编号正确");
+    if (wsAdminCarouselAddProduct(p.id, true)) {
+        alert(`已添加推荐：${p.code} ${p.name}`);
+    }
+}
+
+function wsAdminCarouselAdd() {
+    if (!wsIsAdmin) return;
+    const pick = document.getElementById("wsAdminCarouselPick");
+    const pid = pick?.value;
+    if (!pid) return alert("请先选择商品");
+    wsAdminCarouselAddProduct(pid, false);
+}
+
+function wsAdminCarouselRemove(pid) {
+    if (!wsIsAdmin) return;
+    wsEnsureCarouselConfig();
+    wsData.carouselConfig.customIds = (wsData.carouselConfig.customIds || []).filter((id) => id !== pid);
+    if (wsData.carouselConfig.banners && wsData.carouselConfig.banners[pid]) {
+        delete wsData.carouselConfig.banners[pid];
+    }
+    wsSave();
+    wsRenderAdminCarousel();
+    wsRenderCarousel();
+}
+
+function wsAdminCarouselMove(pid, delta) {
+    if (!wsIsAdmin) return;
+    wsEnsureCarouselConfig();
+    const ids = wsData.carouselConfig.customIds || [];
+    const i = ids.indexOf(pid);
+    if (i < 0) return;
+    const j = i + delta;
+    if (j < 0 || j >= ids.length) return;
+    [ids[i], ids[j]] = [ids[j], ids[i]];
+    wsSave();
+    wsRenderAdminCarousel();
+    wsRenderCarousel();
+}
+
+function wsAdminCarouselSetBanner(pid) {
+    if (!wsIsAdmin) return;
+    wsEnsureCarouselConfig();
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.onchange = () => {
+        if (!input.files?.[0]) return;
+        const r = new FileReader();
+        r.onload = (e) => {
+            wsData.carouselConfig.banners = wsData.carouselConfig.banners || {};
+            wsData.carouselConfig.banners[pid] = e.target.result;
+            wsSave();
+            wsRenderAdminCarousel();
+            wsRenderCarousel();
+            alert("推荐大图已设置");
+        };
+        r.readAsDataURL(input.files[0]);
+    };
+    input.click();
 }
 
 function wsApproveLeader(appId) {
@@ -764,16 +1144,33 @@ function wsToggleGroup(gid) {
 function wsSetProductStatus(pid, status) {
     const p = wsData.products.find((x) => x.id === pid);
     if (p) p.status = status;
+    if (status === "offline") {
+        wsEnsureCarouselConfig();
+        wsData.carouselConfig.customIds = (wsData.carouselConfig.customIds || []).filter((id) => id !== pid);
+    }
     wsSave();
     wsRenderAdmin();
     wsRenderAll();
 }
 
 function wsToggleFeatured(pid) {
-    wsData.carouselFeatured = wsData.carouselFeatured || [];
-    const i = wsData.carouselFeatured.indexOf(pid);
-    if (i >= 0) wsData.carouselFeatured.splice(i, 1);
-    else wsData.carouselFeatured.push(pid);
+    wsEnsureCarouselConfig();
+    const cfg = wsData.carouselConfig;
+    const ids = cfg.customIds;
+    const i = ids.indexOf(pid);
+    if (i >= 0) {
+        ids.splice(i, 1);
+    } else {
+        if ((cfg.customCount || 0) === 0) {
+            if (!confirm("当前没有自定义位。是否设为 1 个自定义位并加入该商品？")) return;
+            cfg.customCount = 1;
+        }
+        if (ids.length >= cfg.customCount) {
+            alert(`自定义位已满（${cfg.customCount}/${WS_CAROUSEL_MAX}），请在管理后台调整数量或移除商品`);
+            return;
+        }
+        ids.push(pid);
+    }
     wsSave();
     wsRenderAdmin();
     wsRenderCarousel();
@@ -794,6 +1191,98 @@ function wsRemoveCategory(i) {
     wsSave();
     wsRenderCategoryTree();
     wsRenderAdmin();
+}
+
+/** 演示：加载示例团与商品（管理员测试用） */
+function wsDemoSeedWorkshop() {
+    if (!wsIsAdmin) return alert("仅管理员可用");
+    wsLoad();
+    wsEnsureProductCodes();
+    const leaderName = wsUser?.name || "admin";
+    let rec = wsData.leaders.find((l) => l.user === leaderName);
+    if (!rec) {
+        rec = { user: leaderName, groupIds: [], expiresAt: Date.now() + 30 * 86400000, active: true };
+        wsData.leaders.push(rec);
+    } else {
+        rec.active = true;
+        rec.expiresAt = Date.now() + 30 * 86400000;
+    }
+    let gid = rec.groupIds?.[0];
+    let g = gid ? wsData.groups.find((x) => x.id === gid) : null;
+    if (!g) {
+        gid = "g_demo_" + Date.now();
+        g = {
+            id: gid,
+            name: "演示团·米米好物",
+            leaderUser: leaderName,
+            startAt: Date.now() - 86400000,
+            endAt: Date.now() + 30 * 86400000,
+            maxProducts: 10,
+            active: true
+        };
+        wsData.groups.push(g);
+        rec.groupIds = rec.groupIds || [];
+        rec.groupIds.push(gid);
+    }
+    const demos = [
+        { name: "手工玉米挂件", desc: "演示商品 A", majorCat: "饰品", minorCat: "挂件", want: 12 },
+        { name: "校园文创徽章", desc: "演示商品 B", majorCat: "饰品", minorCat: "其他", want: 8 },
+        { name: "10cm 棉花娃娃", desc: "演示商品 C", majorCat: "娃娃", minorCat: "10cm娃", want: 5 }
+    ];
+    const added = [];
+    demos.forEach((d) => {
+        if (wsData.products.some((p) => p.name === d.name && p.groupId === gid)) return;
+        const codeInfo = wsAllocateProductCode();
+        wsData.products.push({
+            id: "p_demo_" + Date.now() + "_" + codeInfo.codeNum,
+            codeNum: codeInfo.codeNum,
+            code: codeInfo.code,
+            groupId: gid,
+            name: d.name,
+            desc: d.desc,
+            majorCat: d.majorCat,
+            minorCat: d.minorCat,
+            image: "",
+            contactImage: "",
+            hasQuestion: false,
+            wantCount: d.want,
+            status: "active",
+            listedUntil: g.endAt,
+            leaderUser: leaderName,
+            createdAt: Date.now()
+        });
+        added.push(codeInfo.code);
+    });
+    wsSave();
+    wsUpdateToolbar();
+    wsRenderAll();
+    if (typeof wsRenderAdmin === "function" && document.getElementById("modalWsAdmin")?.style.display === "flex") {
+        wsRenderAdmin();
+    }
+    alert(`演示数据已加载！\n团长：${leaderName}\n团名：${g.name}\n商品编号：${added.join("、") || "（已有商品未重复添加）"}\n\n可在管理后台用编号配置精品推荐。`);
+}
+
+/** 演示：当前登录账号直接成为团长（跳过审核） */
+function wsDemoMakeCurrentUserLeader() {
+    wsLoad();
+    wsSyncFromMain();
+    const name = wsUser?.name || currentUser?.name;
+    if (!name) return alert("请先登录");
+    if (!wsIsAdmin && !confirm("仅建议管理员用于测试。确定将当前账号设为团长？")) return;
+    let rec = wsData.leaders.find((l) => l.user === name);
+    if (!rec) {
+        rec = { user: name, groupIds: [], expiresAt: Date.now() + 30 * 86400000, active: true };
+        wsData.leaders.push(rec);
+    } else {
+        rec.active = true;
+        rec.expiresAt = Date.now() + 30 * 86400000;
+    }
+    (wsData.applications || []).filter((a) => a.user === name && a.status === "pending").forEach((a) => {
+        a.status = "approved";
+    });
+    wsSave();
+    wsUpdateToolbar();
+    alert(`已为「${name}」开通团长资格（30天）。\n请让管理员在后台「创建团」后，即可使用「我要上架」。\n或点击「加载演示数据」自动创建演示团与商品。`);
 }
 
 function wsInit() {

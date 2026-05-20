@@ -14,8 +14,8 @@
 <link rel="stylesheet" href="css/extra.css">
 <link rel="stylesheet" href="css/workshop.css">
 <style>
-    /* 按钮被点击时的样式：绿色背景，白色文字，持续300ms */
-    .btn-active {
+    /* 按钮被点击时的样式：绿色背景，白色文字，持续300ms（不影响登录页切换按钮） */
+    .btn-active:not(.auth-tab) {
         background-color: #c0e070 !important;
         color: white !important;
     }
@@ -24,15 +24,9 @@
 
 <body onclick="autoPlayAttempt()">
 
-<!-- ========================================
-     2. 固定悬浮控件：音乐播放器
-========================================= -->
-<div id="musicCtrl">
-    🌽
-    <audio id="bgm" loop preload="auto">
-        <source src="Tyu me.m4a" type="audio/mp4">
-    </audio>
-</div>
+<audio id="bgm" loop preload="auto" style="display:none;">
+    <source src="Tyu me.m4a" type="audio/mp4">
+</audio>
 
 <!-- ========================================
      3. 登录 / 注册页面
@@ -44,15 +38,17 @@
             <p>全能日期智能教务系统</p>
         </div>
 
-        <div class="auth-body">
+        <div class="auth-body" id="authBody" data-mode="login">
             <!-- 登录注册切换 -->
-            <div class="tab">
-                <button id="tabL" class="tab-btn active" onclick="switchAuthTab('L')">登录</button>
-                <button id="tabR" class="tab-btn" onclick="switchAuthTab('R')">注册</button>
+            <p class="auth-tab-label">点选你要去的页面哦～</p>
+            <div class="auth-tab-switch" role="tablist" aria-label="登录或注册">
+                <button type="button" id="tabL" class="auth-tab auth-tab--login is-active" role="tab" aria-selected="true" aria-controls="loginForm" onclick="switchAuthTab('L'); return false;"><span class="tab-emoji" aria-hidden="true">✨</span>账号登录</button>
+                <button type="button" id="tabR" class="auth-tab auth-tab--register" role="tab" aria-selected="false" aria-controls="regForm" onclick="switchAuthTab('R'); return false;"><span class="tab-emoji" aria-hidden="true">🌱</span>账号注册</button>
             </div>
-
             <!-- 登录表单 -->
-            <div id="loginForm">
+            <div id="loginForm" class="auth-panel auth-panel--login" role="tabpanel" aria-labelledby="tabL">
+                <h2 class="auth-panel-title"><span aria-hidden="true">✨</span> 账号登录</h2>
+                <p class="auth-panel-desc">填好昵称和密码，就能进米米宇宙啦</p>
                 <select id="lRole">
                     <option value="student">我是学生</option>
                     <option value="teacher">我是老师</option>
@@ -64,17 +60,18 @@
                     <input type="password" id="lPass" placeholder="密码">
                     <button type="button" class="pwd-toggle" onclick="togglePasswordVisibility('lPass')"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 4C6.48 4 1.73 7.11 0 11.5c1.73 4.39 6.48 7.5 12 7.5s10.27-3.11 12-7.5c-1.73-4.39-6.48-7.5-12-7.5zm0 12c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z" fill="currentColor"/></svg></button>
                 </div>
-                <button onclick="handleLogin()">进入系统</button>
-                <div
-                    style="text-align:center; margin-top:15px; font-size:13px; color:var(--primary-dark);"
-                    onclick="openForgotModal()"
-                >
-                    忘记密码？
-                </div>
+                <button type="button" class="auth-submit auth-submit--login" onclick="handleLogin()">登录并进入系统</button>
+                <p class="auth-switch-link">
+                    还没有账号？
+                    <button type="button" class="auth-switch-btn" onclick="switchAuthTab('R')">去注册新账号 →</button>
+                </p>
+                <div class="auth-forgot-link" onclick="openForgotModal()">忘记密码？</div>
             </div>
 
             <!-- 注册表单 -->
-            <div id="regForm" style="display:none;">
+            <div id="regForm" class="auth-panel auth-panel--register" style="display:none;" role="tabpanel" aria-labelledby="tabR">
+                <h2 class="auth-panel-title"><span aria-hidden="true">🌱</span> 账号注册</h2>
+                <p class="auth-panel-desc">第一次来？在这里创建新账号（和登录是分开的哦）</p>
                 <select id="rRole" onchange="toggleTeacherInvite()">
                     <option value="student">注册为学生</option>
                     <option value="teacher">注册为老师</option>
@@ -90,7 +87,11 @@
                     <input type="password" id="rPass2" placeholder="确认密码">
                     <button type="button" class="pwd-toggle" onclick="togglePasswordVisibility('rPass2')"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 4C6.48 4 1.73 7.11 0 11.5c1.73 4.39 6.48 7.5 12 7.5s10.27-3.11 12-7.5c-1.73-4.39-6.48-7.5-12-7.5zm0 12c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z" fill="currentColor"/></svg></button>
                 </div>
-                <button onclick="handleRegister()">立即注册</button>
+                <button type="button" class="auth-submit auth-submit--register" onclick="handleRegister()">完成注册</button>
+                <p class="auth-switch-link">
+                    已有账号？
+                    <button type="button" class="auth-switch-btn" onclick="switchAuthTab('L')">去登录 →</button>
+                </p>
             </div>
         </div>
     </div>
@@ -275,25 +276,33 @@
 
     <!-- 4.6 米米小作坊 -->
     <div id="pageW" class="container ws-page" style="display:none;">
-        <div class="ws-page-toolbar">
-            <h3 style="margin:0;">🧵 米米小作坊</h3>
+        <div class="ws-page-top-bar">
             <div class="ws-page-actions">
-                <button class="btn-ui-secondary" style="padding:6px 12px;font-size:11px;" onclick="wsOpenLeaderApply()">团长申请</button>
-                <button id="wsListBtn" class="btn-ui-primary" style="padding:6px 12px;font-size:11px;display:none;" onclick="wsOpenListModal()">我要上架</button>
-                <button id="wsAdminBtn" class="btn-ui-secondary" style="padding:6px 12px;font-size:11px;display:none;" onclick="wsOpenAdmin()">管理后台</button>
+                <button type="button" class="btn-ui-secondary ws-toolbar-btn" onclick="wsOpenLeaderApply()">团长申请</button>
+                <button type="button" id="wsListBtn" class="btn-ui-primary ws-toolbar-btn" style="display:none;" onclick="wsOpenListModal()">我要上架</button>
+                <button type="button" id="wsAdminBtn" class="btn-ui-primary ws-toolbar-btn" style="display:none;" onclick="wsOpenAdmin()">管理后台</button>
             </div>
         </div>
-        <div class="ws-notice-wrap">
-            <div class="ws-notice-card" id="wsNoticeCard">
-                <img class="ws-notice-img" id="wsNoticeImg" alt="">
-                <div class="ws-notice-body">
-                    <span class="ws-notice-tag" id="wsNoticeTag">通知</span>
-                    <span class="ws-notice-name" id="wsNoticeName">暂无推荐</span>
+        <section class="ws-featured-section">
+            <div class="ws-featured-header">
+                <div class="ws-featured-header-left">
+                    <h4 class="ws-featured-title">✨ 精品推荐</h4>
+                    <span class="ws-featured-hint">自动轮播 · 点击查看详情</span>
                 </div>
             </div>
-            <div class="ws-carousel-dots" id="wsCarouselDots"></div>
-        </div>
-        <div id="wsWantBar" class="ws-want-bar" style="display:none;"></div>
+            <div class="ws-notice-wrap">
+                <div class="ws-notice-card" id="wsNoticeCard">
+                    <img class="ws-notice-hero" id="wsNoticeImg" alt="">
+                    <div class="ws-notice-overlay">
+                        <span class="ws-notice-tag" id="wsNoticeTag">通知</span>
+                        <span class="ws-notice-name" id="wsNoticeName">暂无推荐</span>
+                        <p class="ws-notice-desc" id="wsNoticeDesc">上架商品后将在此展示</p>
+                        <span class="ws-notice-cta" aria-hidden="true">查看详情 →</span>
+                    </div>
+                </div>
+                <div class="ws-carousel-dots" id="wsCarouselDots"></div>
+            </div>
+        </section>
         <div class="ws-layout">
             <aside class="ws-cat-side">
                 <b class="ws-cat-side-title">分类</b>
@@ -563,6 +572,8 @@
 <div id="modalWsLeaderApply" class="modal">
     <div class="modal-content" style="max-width:440px;">
         <h3>团长申请</h3>
+        <div id="wsLeaderApplyStatus" class="ws-leader-apply-status"></div>
+        <p style="font-size:12px;color:#666;">流程：提交申请 → 管理员审核 → 为您创建团 → 使用「我要上架」</p>
         <p style="font-size:12px;color:#666;">请下载说明文档填写后，发送至下方邮箱（内容占位，待确定）</p>
         <a id="wsApplyDoc" href="#" target="_blank" class="btn-ui-secondary" style="display:block;text-align:center;margin:10px 0;">📄 团长申请说明文档（占位）</a>
         <p id="wsApplyEmail" style="font-size:13px;background:#f8ffe6;padding:10px;border-radius:8px;"></p>
@@ -644,6 +655,12 @@
         <button type="button" class="modal-close-fab" onclick="closeM('modalWsAdmin')" aria-label="关闭">×</button>
         <div class="modal-content modal-admin-scroll">
             <h3>小作坊管理后台</h3>
+            <div class="ws-admin-section ws-admin-demo-bar">
+                <b>演示 / 测试</b>
+                <p class="ws-admin-hint">无团长或商品时可一键生成演示环境。</p>
+                <button type="button" class="btn-ui-secondary" style="width:100%;margin-bottom:6px;" onclick="wsDemoMakeCurrentUserLeader()">演示：当前账号开通团长</button>
+                <button type="button" class="btn-ui-primary" style="width:100%;" onclick="wsDemoSeedWorkshop()">演示：加载示例团 + 3 件商品（含编号）</button>
+            </div>
             <div class="ws-admin-section">
                 <b>待审核团长申请</b>
                 <div id="wsAdminApps"></div>
@@ -673,7 +690,41 @@
                 <div id="wsAdminCats" style="margin-top:8px;"></div>
             </div>
             <div class="ws-admin-section">
-                <b>制品管理（下架/变灰/主推）</b>
+                <b>精品推荐（共 5 个，可混搭）</b>
+                <p class="ws-admin-hint">自由分配：例如 2 个自定义 + 3 个想要榜，或 1 个自定义 + 4 个想要榜。自定义位在前，其余按想要数自动补齐。</p>
+                <div class="ws-carousel-split-row">
+                    <label class="ws-carousel-split-label">
+                        自定义数量
+                        <select id="wsAdminCarouselCustomCount" onchange="wsSetCarouselCustomCount(+this.value)">
+                            <option value="0">0</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                        </select>
+                    </label>
+                    <span id="wsAdminCarouselWantCountLabel" class="ws-carousel-split-want">想要榜：5 个（自动）</span>
+                </div>
+                <div id="wsAdminCarouselCustom" class="ws-admin-carousel-panel">
+                    <b class="ws-admin-carousel-subtitle">自定义商品</b>
+                    <div id="wsAdminCarouselList"></div>
+                    <div class="ws-admin-carousel-add ws-admin-carousel-add--code" id="wsAdminCarouselCodeRow">
+                        <input type="text" id="wsAdminCarouselCodeInp" placeholder="输入编号，如 10001 或 WS-10001">
+                        <button type="button" class="btn-ui-primary" onclick="wsAdminCarouselAddByCode()">按编号添加</button>
+                    </div>
+                    <div class="ws-admin-carousel-add" id="wsAdminCarouselAddRow">
+                        <select id="wsAdminCarouselPick"></select>
+                        <button type="button" class="btn-ui-secondary" onclick="wsAdminCarouselAdd()">从列表添加</button>
+                    </div>
+                </div>
+                <div id="wsAdminCarouselWant" class="ws-admin-carousel-panel">
+                    <b class="ws-admin-carousel-subtitle">想要榜预览（自动）</b>
+                    <div id="wsAdminCarouselWantPreview"></div>
+                </div>
+            </div>
+            <div class="ws-admin-section">
+                <b>制品管理（下架/变灰/推荐）</b>
                 <div id="wsAdminProducts"></div>
             </div>
         </div>
