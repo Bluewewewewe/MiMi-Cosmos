@@ -35,64 +35,57 @@
     <div class="auth-card">
         <div class="auth-header">
             <h1>🌿 米米宇宙</h1>
-            <p>全能日期智能教务系统</p>
+            <p>甜玉米专属 ✨ 栩你渝生CP粉丝空间</p>
         </div>
 
-        <div class="auth-body" id="authBody" data-mode="login">
-            <!-- 登录注册切换 -->
-            <p class="auth-tab-label">点选你要去的页面哦～</p>
-            <div class="auth-tab-switch" role="tablist" aria-label="登录或注册">
-                <button type="button" id="tabL" class="auth-tab auth-tab--login is-active" role="tab" aria-selected="true" aria-controls="loginForm" onclick="switchAuthTab('L'); return false;"><span class="tab-emoji" aria-hidden="true">✨</span>账号登录</button>
-                <button type="button" id="tabR" class="auth-tab auth-tab--register" role="tab" aria-selected="false" aria-controls="regForm" onclick="switchAuthTab('R'); return false;"><span class="tab-emoji" aria-hidden="true">🌱</span>账号注册</button>
+        <!-- Step 0: 欢迎页 -->
+        <div id="gateWelcome" class="gate-step">
+            <div class="gate-welcome-icon">🌽</div>
+            <h2 class="gate-title">欢迎来到米米宇宙</h2>
+            <p class="gate-desc">这里是栩你渝生CP粉丝的专属空间<br>为了保护我们的社区，需要完成简单的验证</p>
+            <div class="gate-steps-preview">
+                <div class="gate-step-item"><span>1️⃣</span> 答题验证</div>
+                <div class="gate-step-item"><span>2️⃣</span> 微博验证</div>
+                <div class="gate-step-item"><span>3️⃣</span> 进入宇宙 ✨</div>
             </div>
-            <!-- 登录表单 -->
-            <div id="loginForm" class="auth-panel auth-panel--login" role="tabpanel" aria-labelledby="tabL">
-                <h2 class="auth-panel-title"><span aria-hidden="true">✨</span> 账号登录</h2>
-                <p class="auth-panel-desc">填好昵称和密码，就能进米米宇宙啦</p>
-                <select id="lRole">
-                    <option value="student">我是学生</option>
-                    <option value="teacher">我是老师</option>
-                    <option value="admin">我是管理员</option>
-                    <option value="super">我是大管理</option>
-                </select>
-                <input type="text" id="lUser" placeholder="用户名/昵称">
-                <div style="position:relative;">
-                    <input type="password" id="lPass" placeholder="密码">
-                    <button type="button" class="pwd-toggle" onclick="togglePasswordVisibility('lPass')"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 4C6.48 4 1.73 7.11 0 11.5c1.73 4.39 6.48 7.5 12 7.5s10.27-3.11 12-7.5c-1.73-4.39-6.48-7.5-12-7.5zm0 12c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z" fill="currentColor"/></svg></button>
-                </div>
-                <button type="button" class="auth-submit auth-submit--login" onclick="handleLogin()">登录并进入系统</button>
-                <p class="auth-switch-link">
-                    还没有账号？
-                    <button type="button" class="auth-switch-btn" onclick="switchAuthTab('R')">去注册新账号 →</button>
-                </p>
-                <div class="auth-forgot-link" onclick="openForgotModal()">忘记密码？</div>
-            </div>
+            <button class="gate-btn gate-btn-primary" onclick="startGate()">开始验证 🚀</button>
+            <p class="gate-note">需要栩你渝生超话7级以上</p>
+        </div>
 
-            <!-- 注册表单 -->
-            <div id="regForm" class="auth-panel auth-panel--register" style="display:none;" role="tabpanel" aria-labelledby="tabR">
-                <h2 class="auth-panel-title"><span aria-hidden="true">🌱</span> 账号注册</h2>
-                <p class="auth-panel-desc">第一次来？在这里创建新账号（和登录是分开的哦）</p>
-                <select id="rRole" onchange="toggleTeacherInvite()">
-                    <option value="student">注册为学生</option>
-                    <option value="teacher">注册为老师</option>
-                </select>
-                <input type="text" id="rInvite" placeholder="老师邀请码（仅老师注册需要）" style="display:none;">
-                <input type="text" id="rUser" placeholder="设置昵称 (限30字)" maxlength="30">
-                <input type="email" id="rEmail" placeholder="绑定邮箱">
-                <div style="position:relative;">
-                    <input type="password" id="rPass" placeholder="设置密码 (至少8位，数字+英文)">
-                    <button type="button" class="pwd-toggle" onclick="togglePasswordVisibility('rPass')"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 4C6.48 4 1.73 7.11 0 11.5c1.73 4.39 6.48 7.5 12 7.5s10.27-3.11 12-7.5c-1.73-4.39-6.48-7.5-12-7.5zm0 12c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z" fill="currentColor"/></svg></button>
+        <!-- Step 1: 答题验证 -->
+        <div id="gateQuiz" class="gate-step" style="display:none;">
+            <h2 class="gate-title">🧠 粉丝验证</h2>
+            <p class="gate-desc">答对3题即可通过（每题30秒）</p>
+            <div id="quizContent"></div>
+        </div>
+
+        <!-- Step 2: 微博验证 -->
+        <div id="gateWeibo" class="gate-step" style="display:none;">
+            <h2 class="gate-title">📱 微博验证</h2>
+            <p class="gate-desc">验证你的微博身份和超话等级</p>
+            <div class="gate-weibo-form">
+                <div class="gate-form-group">
+                    <label>微博UID</label>
+                    <input type="text" id="weiboUid" placeholder="输入你的微博UID（纯数字）">
+                    <p class="gate-hint">如何获取UID：微博主页 → 右上角 → 复制链接 → 末尾数字</p>
                 </div>
-                <div style="position:relative;">
-                    <input type="password" id="rPass2" placeholder="确认密码">
-                    <button type="button" class="pwd-toggle" onclick="togglePasswordVisibility('rPass2')"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 4C6.48 4 1.73 7.11 0 11.5c1.73 4.39 6.48 7.5 12 7.5s10.27-3.11 12-7.5c-1.73-4.39-6.48-7.5-12-7.5zm0 12c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z" fill="currentColor"/></svg></button>
+                <button class="gate-btn" onclick="generateVerifyCode()">获取验证码</button>
+                <div id="codeArea" class="gate-code-area" style="display:none;">
+                    <div class="gate-code-label">请将以下验证码添加到微博简介中：</div>
+                    <div class="gate-code-display" id="codeDisplay">------</div>
+                    <p class="gate-hint">去微博 → 编辑个人资料 → 修改简介 → 填入上面的验证码</p>
+                    <button class="gate-btn gate-btn-primary" id="verifyBtn" onclick="doVerify()">🔍 验证</button>
+                    <p class="gate-hint">验证成功后可以把简介改回去哦</p>
                 </div>
-                <button type="button" class="auth-submit auth-submit--register" onclick="handleRegister()">完成注册</button>
-                <p class="auth-switch-link">
-                    已有账号？
-                    <button type="button" class="auth-switch-btn" onclick="switchAuthTab('L')">去登录 →</button>
-                </p>
             </div>
+        </div>
+
+        <!-- Step 3: 成功 -->
+        <div id="gateSuccess" class="gate-step" style="display:none;">
+            <div class="gate-success-icon">🎉</div>
+            <h2 class="gate-title">验证成功！</h2>
+            <p class="gate-desc">欢迎加入米米宇宙，甜玉米！🌽</p>
+            <button class="gate-btn gate-btn-primary" onclick="enterMainPage()">进入米米宇宙 ✨</button>
         </div>
     </div>
 </div>
@@ -759,6 +752,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <script src="js/core.js"></script>
+<script src="js/quiz-data.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/schedule.js"></script>
 <script src="js/teacher.js"></script>
