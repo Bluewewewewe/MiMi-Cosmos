@@ -1,0 +1,740 @@
+/* ========================================
+   米米宇宙 - 粉丝门禁系统样式
+   保持原有的黄绿可爱风格
+======================================== */
+
+/* ========================================
+   1. 门禁页面基础布局
+======================================== */
+.auth-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 24px 16px;
+}
+
+.auth-card {
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 32px;
+    box-shadow:
+        0 20px 50px rgba(180, 165, 130, 0.12),
+        0 12px 36px rgba(120, 160, 125, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.95);
+    width: 100%;
+    max-width: 500px;
+    overflow: hidden;
+    backdrop-filter: blur(14px);
+}
+
+.auth-header {
+    background: var(--gradient-brand);
+    color: #3d5a45;
+    text-align: center;
+    padding: 36px 20px 32px;
+    position: relative;
+}
+
+.auth-header h1 {
+    margin: 0;
+    font-size: 1.65rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+}
+
+.auth-header p {
+    margin: 8px 0 0;
+    font-size: 0.9rem;
+    opacity: 0.88;
+}
+
+/* ========================================
+   2. 欢迎页面样式
+======================================== */
+.gate-welcome {
+    padding: 30px 24px;
+    text-align: center;
+}
+
+.gate-welcome-icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.gate-welcome h2 {
+    color: var(--primary-dark);
+    margin: 0 0 12px;
+    font-size: 1.5rem;
+}
+
+.gate-welcome p {
+    color: #666;
+    font-size: 14px;
+    line-height: 1.7;
+    margin-bottom: 20px;
+}
+
+.gate-welcome-features {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 24px 0;
+    text-align: left;
+}
+
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #f8fff0 0%, #f0fff0 100%);
+    border-radius: 16px;
+    border: 1px solid #e0f0e0;
+}
+
+.feature-icon {
+    font-size: 24px;
+}
+
+.feature-text {
+    flex: 1;
+}
+
+.feature-text strong {
+    display: block;
+    color: var(--primary-dark);
+    font-size: 14px;
+}
+
+.feature-text span {
+    font-size: 12px;
+    color: #888;
+}
+
+.btn-start-verify {
+    width: 100%;
+    padding: 16px 24px;
+    font-size: 18px;
+    font-weight: 800;
+    border: none;
+    border-radius: 20px;
+    background: linear-gradient(145deg, #a8e6cf, #56ab2f) !important;
+    color: #fff !important;
+    border: 2px solid #56ab2f !important;
+    box-shadow: 0 4px 0 #3d8b1f, 0 6px 16px rgba(86, 171, 47, 0.35) !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 16px;
+}
+
+.btn-start-verify:hover {
+    background: linear-gradient(145deg, #b8f0d8, #66bb35) !important;
+}
+
+.btn-start-verify:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 0 #3d8b1f !important;
+}
+
+/* 冷却时间提示 */
+.quiz-cooldown {
+    background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+    border: 1px solid #ffcc80;
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 16px;
+    display: none;
+}
+
+.cooldown-text {
+    color: #e65100;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+/* ========================================
+   3. 答题页面样式
+======================================== */
+.gate-quiz {
+    padding: 24px;
+}
+
+.quiz-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.quiz-progress {
+    flex: 1;
+    margin-right: 16px;
+}
+
+.quiz-progress-text {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 6px;
+}
+
+.quiz-progress-bar {
+    height: 8px;
+    background: #e8f5e9;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.quiz-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #56ab2f, #a8e6cf);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.quiz-timer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+    border-radius: 20px;
+    border: 2px solid #81c784;
+}
+
+.quiz-timer-icon {
+    font-size: 18px;
+}
+
+.quiz-timer-value {
+    font-size: 18px;
+    font-weight: 800;
+    color: #2e7d32;
+    font-variant-numeric: tabular-nums;
+}
+
+.quiz-timer-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #56ab2f, #8bc34a);
+    border-radius: 0 0 4px 4px;
+    transition: width 1s linear;
+}
+
+.quiz-timer.timer-danger {
+    background: linear-gradient(135deg, #ffebee, #ffcdd2);
+    border-color: #ef5350;
+}
+
+.quiz-timer.timer-danger .quiz-timer-value {
+    color: #c62828;
+}
+
+.quiz-timer.timer-danger .quiz-timer-bar {
+    background: linear-gradient(90deg, #ef5350, #f44336);
+}
+
+.quiz-card {
+    background: #fff;
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #f0f8f0;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.quiz-question {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.quiz-category {
+    display: inline-block;
+    padding: 6px 16px;
+    background: linear-gradient(135deg, #fff9c4, #fff59d);
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #f57f17;
+    margin-bottom: 16px;
+}
+
+.quiz-question h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #333;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.quiz-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.quiz-option {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    background: linear-gradient(135deg, #f8fff8, #f0fff0);
+    border: 2px solid #e0f0e0;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.quiz-option:hover {
+    background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+    border-color: #81c784;
+    transform: translateX(4px);
+}
+
+.quiz-option.disabled {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.quiz-option.correct {
+    background: linear-gradient(135deg, #c8e6c9, #a5d6a7) !important;
+    border-color: #66bb6a !important;
+    animation: pulse-correct 0.5s ease;
+}
+
+@keyframes pulse-correct {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+.quiz-option.wrong {
+    background: linear-gradient(135deg, #ffcdd2, #ef9a9a) !important;
+    border-color: #e57373 !important;
+}
+
+.option-letter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: #fff;
+    border-radius: 50%;
+    font-weight: 800;
+    color: var(--primary);
+    font-size: 14px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.option-text {
+    flex: 1;
+    font-size: 15px;
+    color: #333;
+    line-height: 1.4;
+}
+
+.quiz-feedback {
+    text-align: center;
+    margin-top: 16px;
+    display: none;
+}
+
+.feedback-correct {
+    font-size: 18px;
+    font-weight: 700;
+    color: #2e7d32;
+}
+
+.feedback-wrong {
+    font-size: 18px;
+    font-weight: 700;
+    color: #c62828;
+}
+
+.quiz-back-btn {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin-top: 16px;
+    background: none;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    color: #666;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.quiz-back-btn:hover {
+    background: #f5f5f5;
+    border-color: #ccc;
+}
+
+/* ========================================
+   4. 微博验证页面样式
+======================================== */
+.gate-weibo {
+    padding: 24px;
+}
+
+.weibo-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.weibo-header h2 {
+    color: var(--primary-dark);
+    margin: 0 0 8px;
+    font-size: 1.4rem;
+}
+
+.weibo-header p {
+    color: #666;
+    font-size: 14px;
+    margin: 0;
+}
+
+.code-display {
+    background: linear-gradient(135deg, #fff9c4, #fff59d);
+    border: 2px dashed #fbc02d;
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.code-label {
+    display: block;
+    font-size: 14px;
+    color: #f57f17;
+    margin-bottom: 8px;
+}
+
+.code-value {
+    font-size: 32px;
+    font-weight: 900;
+    color: #e65100;
+    letter-spacing: 6px;
+    font-family: 'Courier New', monospace;
+}
+
+.code-expiry {
+    display: block;
+    font-size: 12px;
+    color: #f57f17;
+    margin-top: 8px;
+}
+
+.weibo-steps {
+    background: #f8fff8;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.step-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #e0f0e0;
+}
+
+.step-item:last-child {
+    border-bottom: none;
+}
+
+.step-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: var(--primary);
+    color: #fff;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.step-content {
+    flex: 1;
+}
+
+.step-title {
+    font-weight: 600;
+    color: #333;
+    font-size: 14px;
+}
+
+.step-desc {
+    font-size: 12px;
+    color: #888;
+    margin-top: 4px;
+}
+
+.uid-input-group {
+    margin-bottom: 16px;
+}
+
+.uid-input-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.uid-input-group input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid #e0f0e0;
+    border-radius: 12px;
+    font-size: 15px;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.uid-input-group input:focus {
+    outline: none;
+    border-color: #81c784;
+    box-shadow: 0 0 0 3px rgba(129, 199, 132, 0.3);
+}
+
+.uid-hint {
+    font-size: 12px;
+    color: #888;
+    margin-top: 6px;
+}
+
+.btn-verify-weibo {
+    width: 100%;
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 700;
+    border: none;
+    border-radius: 16px;
+    background: linear-gradient(145deg, #ff7043, #f4511e) !important;
+    color: #fff !important;
+    border: 2px solid #e64a19 !important;
+    box-shadow: 0 4px 0 #bf360c, 0 6px 16px rgba(244, 81, 30, 0.3) !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-verify-weibo:hover:not(:disabled) {
+    background: linear-gradient(145deg, #ff8a65, #ff5722) !important;
+}
+
+.btn-verify-weibo:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.verify-result {
+    margin-top: 20px;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.verify-loading {
+    padding: 20px;
+    text-align: center;
+    background: #f5f5f5;
+    color: #666;
+}
+
+.verify-success {
+    padding: 20px;
+    text-align: center;
+    background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+    border: 2px solid #81c784;
+}
+
+.verify-success h4 {
+    color: #2e7d32;
+    margin: 0 0 12px;
+    font-size: 18px;
+}
+
+.verify-success p {
+    margin: 6px 0;
+    color: #333;
+}
+
+.verify-error {
+    padding: 20px;
+    text-align: center;
+    background: linear-gradient(135deg, #ffebee, #ffcdd2);
+    border: 2px solid #ef9a9a;
+}
+
+.verify-error h4 {
+    color: #c62828;
+    margin: 0 0 12px;
+    font-size: 18px;
+}
+
+.verify-simulated {
+    padding: 20px;
+    background: #fff3e0;
+    border: 2px solid #ffcc80;
+}
+
+.verify-simulated h4 {
+    color: #e65100;
+    margin: 0 0 12px;
+}
+
+.verify-simulated ol {
+    padding-left: 24px;
+    margin: 12px 0;
+    color: #333;
+}
+
+.verify-simulated li {
+    margin: 8px 0;
+}
+
+.btn-simulate {
+    width: 100%;
+    padding: 12px;
+    margin-top: 16px;
+    background: #ff9800;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.weibo-back-btn {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin-top: 16px;
+    background: none;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    color: #666;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.weibo-back-btn:hover {
+    background: #f5f5f5;
+    border-color: #ccc;
+}
+
+/* ========================================
+   5. 成功页面样式
+======================================== */
+.gate-success {
+    padding: 40px 24px;
+    text-align: center;
+}
+
+.success-icon {
+    font-size: 80px;
+    margin-bottom: 20px;
+    animation: bounce 1s ease infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+}
+
+.success-content h2 {
+    color: var(--primary-dark);
+    margin: 0 0 16px;
+    font-size: 1.6rem;
+}
+
+.success-content p {
+    color: #666;
+    font-size: 15px;
+    margin: 8px 0;
+}
+
+.token-hint {
+    font-size: 13px !important;
+    color: #888 !important;
+    margin-top: 16px !important;
+    padding: 12px;
+    background: #f5f5f5;
+    border-radius: 8px;
+}
+
+.btn-enter-system {
+    width: 100%;
+    padding: 18px;
+    margin-top: 24px;
+    font-size: 18px;
+    font-weight: 800;
+    border: none;
+    border-radius: 20px;
+    background: linear-gradient(145deg, #ffd54f, #ffb300) !important;
+    color: #5d4037 !important;
+    border: 2px solid #ffa000 !important;
+    box-shadow: 0 4px 0 #ff8f00, 0 6px 16px rgba(255, 179, 0, 0.4) !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.auto-login-hint {
+    font-size: 13px;
+    color: #888;
+    margin-top: 12px;
+}
+
+/* ========================================
+   6. 动画和过渡
+======================================== */
+.gate-page {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ========================================
+   7. 响应式适配
+======================================== */
+@media (max-width: 480px) {
+    .auth-card {
+        border-radius: 24px;
+        margin: 0 -8px;
+    }
+    
+    .quiz-question h3 {
+        font-size: 16px;
+    }
+    
+    .code-value {
+        font-size: 28px;
+        letter-spacing: 4px;
+    }
+    
+    .btn-start-verify,
+    .btn-verify-weibo,
+    .btn-enter-system {
+        font-size: 16px;
+        padding: 14px;
+    }
+}

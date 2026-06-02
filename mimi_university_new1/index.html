@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <!-- ========================================
+         1. 页面基础信息
+    ========================================= -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>米米宇宙 - 智能教务管理系统</title>
+    <link rel="stylesheet" href="css/core.css">
+    <link rel="stylesheet" href="css/auth.css">
+    <link rel="stylesheet" href="css/schedule.css">
+    <link rel="stylesheet" href="css/teacher.css">
+    <link rel="stylesheet" href="css/extra.css">
+    <link rel="stylesheet" href="css/workshop.css">
+    <style>
+        /* 按钮被点击时的样式：绿色背景，白色文字，持续300ms */
+        .btn-active:not(.auth-tab) {
+            background-color: #c0e070 !important;
+            color: white !important;
+        }
+    </style>
+</head>
+
+<body onclick="autoPlayAttempt()">
+
+<audio id="bgm" loop preload="auto" style="display:none;">
+    <source src="Tyu me.m4a" type="audio/mp4">
+</audio>
+
+<!-- ========================================
+     2. 粉丝门禁页面（新版登录）
+========================================= -->
+<div id="authPage" class="auth-page">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h1>🌿 米米宇宙</h1>
+            <p>粉丝专属入口 · 需验证微博账号</p>
+        </div>
+
+        <!-- 欢迎页面 -->
+        <div id="gateWelcomePage" class="gate-page gate-welcome">
+            <div class="gate-welcome-icon">🔐</div>
+            <h2>欢迎来到米米宇宙</h2>
+            <p>为保障社区纯净，需要完成以下验证才能进入</p>
+            
+            <div class="gate-welcome-features">
+                <div class="feature-item">
+                    <span class="feature-icon">📝</span>
+                    <div class="feature-text">
+                        <strong>答题验证</strong>
+                        <span>回答3道粉丝知识题，每题30秒</span>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">📱</span>
+                    <div class="feature-text">
+                        <strong>微博验证</strong>
+                        <span>验证微博账号及超话等级≥7</span>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">🔑</span>
+                    <div class="feature-text">
+                        <strong>90天免验证</strong>
+                        <span>一次验证，有效期90天</span>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn-start-verify" onclick="startQuizVerification()">
+                🎯 开始验证
+            </button>
+
+            <div id="quizCooldown" class="quiz-cooldown">
+                <span class="cooldown-text">⏰ 答题过于频繁，请稍后再试</span>
+            </div>
+        </div>
+
+        <!-- 答题页面 -->
+        <div id="gateQuizPage" class="gate-page gate-quiz" style="display:none;">
+            <div class="quiz-header">
+                <div class="quiz-progress">
+                    <div class="quiz-progress-text">
+                        题目 <span id="questionNum">1/3</span>
+                    </div>
+                    <div class="quiz-progress-bar">
+                        <div id="quizProgress" class="quiz-progress-fill" style="width:33%"></div>
+                    </div>
+                </div>
+                <div class="quiz-timer">
+                    <span class="quiz-timer-icon">⏱️</span>
+                    <span id="quizTimer" class="quiz-timer-value">00:30</span>
+                </div>
+            </div>
+
+            <div class="quiz-card">
+                <div id="quizContent">
+                    <!-- 题目内容由JS动态渲染 -->
+                </div>
+                <div class="quiz-timer-bar" id="quizTimerBar" style="width:100%"></div>
+            </div>
+
+            <div id="quizFeedback" class="quiz-feedback"></div>
+
+            <button class="quiz-back-btn" onclick="gateGoBack()">
+                ← 返回上一步
+            </button>
+        </div>
+
+        <!-- 微博验证页面 -->
+        <div id="gateWeiboPage" class="gate-page gate-weibo" style="display:none;">
+            <div class="weibo-header">
+                <h2>📱 微博账号验证</h2>
+                <p>请按以下步骤完成微博验证</p>
+            </div>
+
+            <div id="verifyCodeDisplay" class="code-display">
+                <!-- 验证码由JS动态生成 -->
+            </div>
+
+            <div id="codeExpiryTime" class="code-expiry" style="text-align:center;font-size:12px;color:#f57f17;margin-bottom:16px;"></div>
+
+            <div class="weibo-steps">
+                <div class="step-item">
+                    <span class="step-number">1</span>
+                    <div class="step-content">
+                        <div class="step-title">复制验证码</div>
+                        <div class="step-desc">复制上方显示的6位验证码</div>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <span class="step-number">2</span>
+                    <div class="step-content">
+                        <div class="step-title">修改微博简介</div>
+                        <div class="step-desc">打开微博 → 编辑个人资料 → 在简介中添加验证码</div>
+                    </div>
+                </div>
+                <div class="step-item">
+                    <span class="step-number">3</span>
+                    <div class="step-content">
+                        <div class="step-title">填写UID并验证</div>
+                        <div class="step-desc">在下方输入框填写您的微博UID，点击验证</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="uid-input-group">
+                <label for="weiboUidInput">📌 微博 UID</label>
+                <input type="text" id="weiboUidInput" placeholder="请输入您的微博UID，如：5678901234">
+                <div class="uid-hint">
+                    💡 如何获取UID？微博主页URL中的数字ID，如 weibo.com/u/5678901234
+                </div>
+            </div>
+
+            <button id="weiboVerifyBtn" class="btn-verify-weibo" onclick="verifyWeiboAccount()">
+                🔍 验证微博账号
+            </button>
+
+            <div id="weiboVerifyResult" class="verify-result"></div>
+
+            <button class="weibo-back-btn" onclick="gateGoBack()">
+                ← 返回答题
+            </button>
+        </div>
+
+        <!-- 成功页面 -->
+        <div id="gateSuccessPage" class="gate-page gate-success" style="display:none;">
+            <div class="success-icon">🎉</div>
+            <div id="successInfo">
+                <!-- 成功信息由JS动态渲染 -->
+            </div>
+            <button class="btn-enter-system" onclick="performLogin()">
+                🌿 进入米米宇宙
+            </button>
+            <div class="auto-login-hint">
+                系统将于 <span id="autoLoginCountdown">5</span> 秒后自动进入
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================
+     3. 主页面（已登录用户）
+========================================= -->
+<div id="mainPage" class="main-page" style="display:none;">
+
+    <!-- ========================================
+         3.1 顶部导航栏
+    ========================================= -->
+    <div class="header">
+        <div style="font-weight:bold; color:var(--primary-dark); font-size:20px;">🌿 米米宇宙</div>
+
+        <div class="nav">
+            <a id="navS" class="active" onclick="changePage('S')">课程表</a>
+            <a id="navT" onclick="changePage('T')">教师档案</a>
+            <a id="navR" onclick="changePage('R')">排行榜</a>
+            <a id="navW" onclick="changePage('W')">米米小作坊</a>
+        </div>
+
+        <div>
+            <button id="chatToggleBtn" onclick="handleChatToggle()" class="btn-ui-secondary" style="padding:6px 12px; font-size:11px; margin-right:8px;">💬 聊天</button>
+            <button id="feedbackBtn" onclick="handleFeedback()" class="btn-ui-secondary" style="padding:6px 12px; font-size:11px; margin-right:8px;">📝 意见箱</button>
+            <span id="userDisp"></span>
+            <!-- 刷新按钮 -->
+            <button id="refreshBtn" onclick="handleRefresh()" class="btn-ui-secondary" style="padding:6px 12px; font-size:11px; margin-left:10px;">🔄 刷新</button>
+            <!-- 退出按钮 -->
+            <button id="logoutBtn" onclick="handleLogout()" class="btn-ui-secondary" style="padding:6px 12px; font-size:11px; margin-left:8px; color:var(--danger)">退出</button>
+        </div>
+    </div>
+
+    <!-- ========================================
+         3.2 页面一：课程表
+    ========================================= -->
+    <div id="pageS" class="container">
+        <div class="toolbar">
+            <div class="tool-card card-week">
+                <span>📅 第</span>
+                <select id="weekSel" onchange="loadWeek()"></select>
+                <span>周</span>
+            </div>
+
+            <div class="tool-card card-date">
+                <span>🗓️ 日期：</span>
+                <input type="date" id="dateViewInp" onchange="jumpToDate()">
+            </div>
+
+            <div id="adminDateSet" class="tool-card card-date" style="display:none;">
+                <span>⚙️ 起始日：</span>
+                <input type="date" id="startDateInp" onchange="updateDate()">
+            </div>
+
+            <div class="tool-card card-search">
+                <span>🔍</span>
+                <input type="text" id="searchInp" placeholder="查询关键词标黄..." oninput="doSearch()">
+            </div>
+
+            <button class="btn-ui-secondary" onclick="exportScheduleImage()">📷 导出当前课表</button>
+            <button class="btn-ui-secondary" onclick="openMyScheduleModal()">🗓️ 我的行程</button>
+        </div>
+
+        <div id="searchResults" class="search-results"></div>
+        <div id="notifyBar" class="notify-bar"></div>
+        <div id="tagFilters" class="tag-filters"></div>
+
+        <div class="calendar-wrapper">
+            <div id="calendarHead" class="calendar-head"></div>
+            <div id="calendarBody" class="calendar-body"></div>
+        </div>
+
+        <div style="text-align:center; margin-top:25px;">
+            <button id="adminBtnS" class="btn-ui-primary" style="display:none; width:220px;" onclick="openSModal()">
+                ✏️ 编辑此周课程
+            </button>
+        </div>
+    </div>
+
+    <!-- ========================================
+         3.3 页面二：教师档案
+    ========================================= -->
+    <div id="pageT" class="container" style="display:none;">
+        <div class="invite-panel" id="invitePanel" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <b>老师邀请码</b>
+                <button class="btn-ui-secondary" style="font-size:11px;" onclick="generateInviteCode()">生成邀请码</button>
+            </div>
+            <div id="inviteList" style="margin-top:8px;"></div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+            <h3>教师团队</h3>
+            <div style="display:flex; gap:8px;">
+                <button id="adminCatBtn" class="btn-ui-secondary" style="display:none;" onclick="openCategoryModal()">分类管理</button>
+                <button id="adminBtnT" class="btn-ui-primary" style="display:none; width:130px;" onclick="openTModal()">+ 新增老师</button>
+            </div>
+        </div>
+
+        <div class="teacher-page-layout">
+            <div class="teacher-side">
+                <b>分类</b>
+                <div id="teacherCategories" style="margin-top:8px;"></div>
+            </div>
+
+            <div class="teacher-main">
+                <div class="teacher-search">
+                    <input id="teacherSearchInp" placeholder="搜索老师/分类" oninput="filterTeachers()">
+                    <button class="btn-ui-secondary" onclick="clearTeacherSearch()">清空</button>
+                </div>
+                <div id="teacherGrid" class="teacher-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================
+         3.4 页面三：排行榜
+    ========================================= -->
+    <div id="pageR" class="container" style="display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h3>排行榜</h3>
+            <div class="rank-tabs">
+                <button class="btn-ui-secondary" onclick="renderRanks('week')">本周</button>
+                <button class="btn-ui-secondary" onclick="renderRanks('month')">本月</button>
+            </div>
+        </div>
+
+        <div class="rank-grid">
+            <div class="rank-card">
+                <b>热门课程</b>
+                <div id="rankCourses"></div>
+            </div>
+            <div class="rank-card">
+                <b>热门老师</b>
+                <div id="rankTeachers"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================
+         3.5 页面四：意见收集箱
+    ========================================= -->
+    <div id="pageF" class="container" style="display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; gap:10px; flex-wrap:wrap;">
+            <h3>意见收集箱</h3>
+            <span id="feedbackHint" style="color:#666; font-size:13px;"></span>
+        </div>
+
+        <div class="rank-card" style="padding:20px; margin-bottom:20px;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+                <span style="font-size:13px; color:#555;">意见分类：</span>
+                <select id="feedbackCategory"></select>
+            </div>
+            <textarea id="feedbackText" placeholder="请输入你的意见，学生与老师只会看见自己提交的意见，管理员和大管理可以查看所有意见。" style="width:100%; min-height:140px; padding:14px; border-radius:16px; border:1px solid #e8f0f6; resize:vertical; font-size:14px;"></textarea>
+            <div style="display:flex; justify-content:flex-end; margin-top:12px; gap:10px; flex-wrap:wrap;">
+                <button id="feedbackSubmitBtn" class="btn-ui-primary" onclick="submitFeedback()">提交意见</button>
+            </div>
+        </div>
+
+        <div class="rank-card" style="padding:20px;">
+            <h4 id="feedbackListTitle">我的反馈</h4>
+            <div class="feedback-toolbar" style="margin-top:12px; margin-bottom:14px;">
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <span style="font-size:13px; color:#555;">全部反馈分类：</span>
+                    <select id="feedbackFilterCategory" onchange="renderFeedbackPage()"></select>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-left:18px;">
+                    <span style="font-size:13px; color:#555;">状态筛选：</span>
+                    <select id="feedbackFilterStatus" onchange="renderFeedbackPage()"></select>
+                </div>
+                <button class="btn-ui-secondary" style="margin-left:auto;" onclick="clearFeedbackFilters()">清空筛选</button>
+            </div>
+            <div id="feedbackList" style="display:grid; gap:12px; margin-top:14px;"></div>
+        </div>
+    </div>
+
+    <!-- 3.6 米米小作坊 -->
+    <div id="pageW" class="container ws-page" style="display:none;">
+        <div class="ws-page-top-bar">
+            <div class="ws-page-actions">
+                <button type="button" class="btn-ui-secondary ws-toolbar-btn" onclick="wsOpenLeaderApply()">团长申请</button>
+                <button type="button" id="wsListBtn" class="btn-ui-primary ws-toolbar-btn" style="display:none;" onclick="wsOpenListModal()">我要上架</button>
+                <button type="button" id="wsAdminBtn" class="btn-ui-primary ws-toolbar-btn" style="display:none;" onclick="wsOpenAdmin()">管理后台</button>
+            </div>
+        </div>
+        <section class="ws-featured-section">
+            <div class="ws-featured-header">
+                <div class="ws-featured-header-left">
+                    <h4 class="ws-featured-title">✨ 精品推荐</h4>
+                    <span class="ws-featured-hint">自动轮播 · 点击查看详情</span>
+                </div>
+            </div>
+            <div class="ws-notice-wrap">
+                <div class="ws-notice-card" id="wsNoticeCard">
+                    <img class="ws-notice-hero" id="wsNoticeImg" alt="">
+                    <div class="ws-notice-overlay">
+                        <span class="ws-notice-tag" id="wsNoticeTag">通知</span>
+                        <span class="ws-notice-name" id="wsNoticeName">暂无推荐</span>
+                        <p class="ws-notice-desc" id="wsNoticeDesc">上架商品后将在此展示</p>
+                        <span class="ws-notice-cta" aria-hidden="true">查看详情 →</span>
+                    </div>
+                </div>
+                <div class="ws-carousel-dots" id="wsCarouselDots"></div>
+            </div>
+        </section>
+        <div class="ws-layout">
+            <aside class="ws-cat-side">
+                <b class="ws-cat-side-title">分类</b>
+                <div id="wsCatTree" class="ws-cat-tree"></div>
+            </aside>
+            <div class="ws-main-col">
+                <div id="wsGroupTabs" class="ws-group-tabs"></div>
+                <div id="wsProductGrid" class="ws-product-grid"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================
+     4. 课程表相关弹窗
+========================================= -->
+
+<!-- 4.1 批量编辑课表 -->
+<div id="modalS" class="modal">
+    <div class="modal-content">
+        <h3 style="margin:0">第 <span id="weekNumTitle"></span> 周 - 批量编辑课表</h3>
+
+        <div class="modal-scroll-area">
+            <table style="min-width:1800px; width:100%;">
+                <thead>
+                    <tr>
+                        <th width="50">操作</th>
+                        <th width="100">时段</th>
+                        <th>周日</th>
+                        <th>周一</th>
+                        <th>周二</th>
+                        <th>周三</th>
+                        <th>周四</th>
+                        <th>周五</th>
+                        <th>周六</th>
+                    </tr>
+                </thead>
+                <tbody id="editSBody"></tbody>
+            </table>
+        </div>
+
+        <div style="display:flex; gap:12px; border-top:1px solid #eee; padding-top:15px;">
+            <button class="btn-ui-primary" onclick="addRow()">+ 新增时间段</button>
+            <button class="btn-ui-primary" style="background:var(--edit)" onclick="saveS()">💾 保存本周修改</button>
+            <button class="btn-ui-secondary" onclick="closeM('modalS')">取消</button>
+        </div>
+    </div>
+</div>
+
+<!-- 4.2 我的行程 -->
+<div id="modalMySchedule" class="modal">
+    <div class="modal-content" style="max-width:520px;">
+        <h3>我的行程（仅自己可见）</h3>
+        <div id="myScheduleList"></div>
+        <button class="btn-ui-secondary" style="width:100%; margin-top:8px;" onclick="addMyScheduleRow()">+ 新增行程</button>
+        <button class="btn-ui-primary" style="width:100%; margin-top:8px;" onclick="saveMySchedule()">保存</button>
+        <button class="btn-ui-secondary" style="width:100%; margin-top:8px;" onclick="closeM('modalMySchedule')">关闭</button>
+    </div>
+</div>
+
+<!-- 4.3 课程详情 -->
+<div id="modalD" class="modal">
+    <div class="modal-content" style="max-width:520px; text-align:center; max-height:85vh; overflow-y:auto;">
+        <h2 id="dTitle" style="color:var(--primary-dark); margin:0;"></h2>
+        <div id="dTeacherInfo" style="display:flex; align-items:center; justify-content:center; background:var(--bg); padding:15px; border-radius:15px; margin:15px 0;"></div>
+        <div id="dVideoArea"></div>
+
+        <div class="detail-section">
+            <div id="dSeries"></div>
+            <div id="dTags" class="detail-tags"></div>
+            <button class="btn-ui-secondary" style="margin:8px 0;" onclick="scrollToOutline()">课程大纲</button>
+            <div id="dMaterials"></div>
+            <div id="dOutline" class="detail-outline"></div>
+        </div>
+
+        <div class="detail-actions">
+            <button id="wantBtn" class="btn-ui-secondary" onclick="toggleWant()">🤍 想看</button>
+            <button id="followBtn" class="btn-ui-secondary" onclick="toggleFollowFromDetail()">关注并订阅</button>
+        </div>
+
+        <div id="dEditArea" class="edit-area" style="display:none;">
+            <b>编辑课程详情</b>
+            <input id="dSeriesName" placeholder="系列名称">
+            <input id="dSeriesSub" placeholder="系列副标题">
+            <input id="dSeriesColor" placeholder="系列颜色(如 #4dabf7)">
+            <input id="dTagsInp" placeholder="标签(用逗号分隔)">
+            <input id="dMaterialsInp" placeholder="资料链接(可多条，用逗号分隔)">
+            <input id="dVideoInp" placeholder="回放链接">
+            <textarea id="dOutlineInp" placeholder="课程大纲"></textarea>
+            <button class="btn-ui-primary" onclick="saveCourseDetail()">保存详情</button>
+        </div>
+
+        <div class="detail-section">
+            <b>讨论区</b>
+            <div class="comment-list" id="dComments"></div>
+            <div class="reply-input">
+                <input id="dCommentInput" placeholder="提问/评论">
+                <button class="btn-ui-secondary" onclick="addComment()">发送</button>
+            </div>
+        </div>
+
+        <button class="btn-ui-secondary" style="width:100%; margin-top:15px;" onclick="closeM('modalD')">关闭详情</button>
+    </div>
+</div>
+
+<!-- ========================================
+     5. 教师相关弹窗
+========================================= -->
+
+<!-- 5.1 教师信息管理 -->
+<div id="modalT" class="modal">
+    <div class="modal-content" style="max-width:450px;">
+        <h3>教师信息管理</h3>
+        <div style="text-align:center">
+            <div id="avaPrev" class="avatar-circle"></div>
+            <input type="file" id="tFile" accept="image/*" style="display:none" onchange="preview(this)">
+            <button class="btn-ui-secondary" style="font-size:11px; padding:6px 16px;" onclick="document.getElementById('tFile').click()">更改头像</button>
+        </div>
+        <input type="hidden" id="editTId">
+        <input type="text" id="tName" placeholder="姓名">
+        <select id="tSub"></select>
+
+        <div style="background:#f4f9eb; padding:15px; border-radius:15px; margin:10px 0;">
+            <input type="text" id="tLinkLabel1" placeholder="链接1名称 (如 公众号)">
+            <input type="text" id="tLinkUrl1" placeholder="链接1地址">
+            <input type="text" id="tLinkLabel2" placeholder="链接2名称 (如 B站)">
+            <input type="text" id="tLinkUrl2" placeholder="链接2地址">
+        </div>
+
+        <button class="btn-ui-primary" style="width:100%" onclick="saveT()">💾 保存档案</button>
+        <button class="btn-ui-secondary" style="width:100%; margin-top:10px;" onclick="closeM('modalT')">返回</button>
+    </div>
+</div>
+
+<!-- 5.2 教师主页 -->
+<div id="modalTeacher" class="modal">
+    <div class="modal-content" style="max-width:520px;">
+        <div class="teacher-modal-header">
+            <div id="teacherAva" class="avatar-circle"></div>
+            <div>
+                <h3 id="teacherName" style="margin:0;"></h3>
+                <div id="teacherSub" style="color:var(--primary-dark); font-size:12px;"></div>
+            </div>
+        </div>
+
+        <div id="teacherLinks" class="teacher-links"></div>
+        <div id="teacherSignature" class="teacher-signature"></div>
+
+        <div style="display:flex; gap:8px;">
+            <button id="teacherFollowBtn" class="btn-ui-secondary" onclick="toggleFollowTeacher()">关注</button>
+            <button id="teacherEditBtn" class="btn-ui-secondary" onclick="editTeacherSelf()" style="display:none;">编辑主页</button>
+        </div>
+
+        <div class="teacher-course-list" id="teacherCourses"></div>
+        <button class="btn-ui-secondary" style="width:100%; margin-top:10px;" onclick="closeM('modalTeacher')">关闭</button>
+    </div>
+</div>
+
+<!-- 5.3 编辑老师主页 -->
+<div id="modalTeacherEdit" class="modal">
+    <div class="modal-content" style="max-width:520px;">
+        <h3>编辑老师主页</h3>
+
+        <div style="text-align:center;">
+            <div id="teacherEditAva" class="avatar-circle"></div>
+            <input type="file" id="teacherEditFile" accept="image/*" style="display:none" onchange="previewTeacherEdit(this)">
+            <button class="btn-ui-secondary" style="font-size:11px; padding:6px 16px;" onclick="document.getElementById('teacherEditFile').click()">更换头像</button>
+        </div>
+
+        <input id="teacherEditName" placeholder="姓名（只读）" disabled>
+        <input id="teacherEditSub" placeholder="科目（只读）" disabled>
+        <input id="teacherEditSign" placeholder="个性签名">
+        <select id="teacherEditCat"></select>
+        <div id="teacherEditLinks"></div>
+
+        <select id="platformOptions" style="display:none;">
+            <option value="微博"></option>
+            <option value="抖音"></option>
+            <option value="小红书"></option>
+            <option value="B站"></option>
+            <option value="公众号"></option>
+            <option value="视频号"></option>
+            <option value="知乎"></option>
+            <option value="小宇宙"></option>
+        </select>
+
+        <button class="btn-ui-secondary" style="width:100%; margin-top:8px;" onclick="addTeacherLinkRow()">+ 添加链接</button>
+        <button class="btn-ui-primary" style="width:100%; margin-top:8px;" onclick="saveTeacherProfile()">保存主页</button>
+        <button class="btn-ui-secondary" style="width:100%; margin-top:8px;" onclick="closeM('modalTeacherEdit')">关闭</button>
+    </div>
+</div>
+
+<!-- 5.4 教师分类管理 -->
+<div id="modalCat" class="modal">
+    <div class="modal-content" style="max-width:420px;">
+        <h3>分类管理</h3>
+        <input id="catInp" placeholder="新增分类">
+        <button class="btn-ui-primary" style="width:100%; margin-top:8px;" onclick="addCategory()">添加</button>
+        <div id="catList" style="margin-top:10px;"></div>
+        <button class="btn-ui-secondary" style="width:100%; margin-top:8px;" onclick="closeM('modalCat')">关闭</button>
+    </div>
+</div>
+
+<!-- ========================================
+     6. 系统功能相关弹窗
+========================================= -->
+
+<!-- 6.1 排行推荐理由 -->
+<div id="modalRankReason" class="modal">
+    <div class="modal-content" style="max-width:420px;">
+        <button class="btn-ui-secondary modal-close" onclick="closeM('modalRankReason')">×</button>
+        <h3 id="rankReasonTitle">推荐理由</h3>
+        <textarea id="rankReasonText" placeholder="写一句推荐理由"></textarea>
+        <button class="btn-ui-primary" style="width:100%; margin-top:8px;" onclick="saveRankReason()">保存</button>
+        <button class="btn-ui-secondary" style="width:100%; margin-top:8px;" onclick="closeM('modalRankReason')">关闭</button>
+    </div>
+</div>
+
+<!-- 6.2 找回密码（已弃用，保留DOM结构） -->
+<div id="forgotModal" class="modal" style="display:none;">
+    <div class="modal-content" style="max-width:400px; text-align:center;">
+        <h3>找回密码</h3>
+        <p>新版门禁系统无需密码，请通过微博验证登录</p>
+        <button class="btn-ui-secondary" style="width:100%; margin-top:10px;" onclick="closeM('forgotModal')">关闭</button>
+    </div>
+</div>
+
+<!-- 米米小作坊弹窗 -->
+<div id="modalWsDisclaimer" class="modal">
+    <div class="modal-content" style="max-width:480px;">
+        <h3>米米宇宙免责说明</h3>
+        <div id="wsDisclaimerBody" class="ws-disclaimer-body"></div>
+        <p id="wsDisclaimerHint" class="ws-disclaimer-hint">请滚动至底部阅读全文</p>
+        <button id="wsDisclaimerOk" class="btn-ui-secondary" style="width:100%;" disabled onclick="wsCloseDisclaimer()">确定进入</button>
+    </div>
+</div>
+
+<!-- 团长申请 -->
+<div id="modalWsLeaderApply" class="modal">
+    <div class="modal-content" style="max-width:440px;">
+        <h3>团长申请</h3>
+        <div id="wsLeaderApplyStatus" class="ws-leader-apply-status"></div>
+        <p style="font-size:12px;color:#666;">流程：提交申请 → 管理员审核 → 为您创建团 → 使用「我要上架」</p>
+        <p style="font-size:12px;color:#666;">请下载说明文档填写后，发送至下方邮箱（内容占位，待确定）</p>
+        <a id="wsApplyDoc" href="#" target="_blank" class="btn-ui-secondary" style="display:block;text-align:center;margin:10px 0;">📄 团长申请说明文档（占位）</a>
+        <p id="wsApplyEmail" style="font-size:13px;background:#f8ffe6;padding:10px;border-radius:8px;"></p>
+        <textarea id="wsApplyNote" placeholder="在此简述申请说明、拟开团名（最多2个团）等…" style="min-height:80px;"></textarea>
+        <button class="btn-ui-primary" style="width:100%;margin-top:8px;" onclick="wsSubmitLeaderApply()">提交申请</button>
+        <button class="btn-ui-secondary" style="width:100%;margin-top:8px;" onclick="closeM('modalWsLeaderApply')">关闭</button>
+    </div>
+</div>
+
+<!-- 上架：步骤1 -->
+<div id="modalWsList" class="modal">
+    <div class="modal-content" style="max-width:520px;max-height:90vh;overflow-y:auto;">
+        <h3>我要上架</h3>
+        <div id="wsListStep1" class="ws-form-step active">
+            <label>团名</label>
+            <select id="wsListGroup" onchange="wsOnListGroupChange()"></select>
+            <div id="wsListExpireHint" class="ws-expire-hint"></div>
+            <label>制品名</label>
+            <input id="wsListName" placeholder="制品名称">
+            <label>大类 / 小类</label>
+            <select id="wsListMajor" onchange="wsOnListMajorChange()"></select>
+            <select id="wsListMinor"></select>
+            <label>制品图片</label>
+            <div id="wsListImageWrap">
+                <input type="file" accept="image/*" onchange="wsReadFileAsDataURL(this, d=>{wsListDraft.image=d; document.getElementById('wsListImgPrev').src=d;})">
+                <img id="wsListImgPrev" style="max-width:100%;max-height:120px;margin-top:8px;border-radius:8px;display:block;">
+            </div>
+            <label>制品介绍（选填）</label>
+            <textarea id="wsListDesc" placeholder="简要介绍"></textarea>
+            <button class="btn-ui-primary" style="width:100%;margin-top:12px;" onclick="wsListNextStep()">下一步</button>
+        </div>
+        <div id="wsListStep2" class="ws-form-step">
+            <label><input type="checkbox" id="wsListHasQa" onchange="wsToggleListQa()"> 设置验证问题（勾选后需填写问题与答案才能展示联系方式）</label>
+            <label>联系方式图片（二维码等，可随时在重新上架时更新）</label>
+            <input type="file" accept="image/*" onchange="wsReadFileAsDataURL(this, d=>{wsListDraft.contactImage=d; document.getElementById('wsListContactPrev').src=d;})">
+            <img id="wsListContactPrev" style="max-width:100%;max-height:120px;margin-top:8px;border-radius:8px;display:block;">
+            <div id="wsListQaBlock" class="ws-qa-block" style="display:none;">
+                <p class="ws-qa-hint">请设置购买者需要回答的问题，答对后才显示联系方式。</p>
+                <label>输入问题</label>
+                <input id="wsListQuestion" placeholder="例如：本团截团日期是？">
+                <label>答案</label>
+                <input id="wsListAnswer" placeholder="与问题对应的准确答案">
+            </div>
+            <div id="wsListQaConfirmRow" style="display:none;margin-top:8px;">
+                <button class="btn-ui-secondary" onclick="wsConfirmQa()">确认问题与答案已填写完成</button>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:12px;">
+                <button class="btn-ui-secondary" style="flex:1;" onclick="wsListPrevStep()">上一步</button>
+                <button class="btn-ui-primary" style="flex:1;" onclick="wsSubmitList()">确认上架</button>
+            </div>
+        </div>
+        <button class="btn-ui-secondary" style="width:100%;margin-top:8px;" onclick="closeM('modalWsList')">取消</button>
+    </div>
+</div>
+
+<!-- 制品详情 -->
+<div id="modalWsProduct" class="modal">
+    <div class="modal-content" style="max-width:480px;max-height:88vh;overflow-y:auto;text-align:center;">
+        <h3 id="wsDetailTitle"></h3>
+        <p id="wsDetailGroup" style="font-size:12px;color:#888;"></p>
+        <img id="wsDetailImg" class="ws-detail-img" alt="">
+        <p id="wsDetailDesc" style="text-align:left;font-size:13px;margin:12px 0;"></p>
+        <div id="wsDetailRelated"></div>
+        <button id="wsDetailWantBtn" class="btn-ui-secondary" style="width:100%;margin:10px 0;" onclick="wsToggleWant()">🤍 想要</button>
+        <div id="wsDetailQaBlock" style="display:none;text-align:left;">
+            <p><b id="wsDetailQuestion"></b></p>
+            <input id="wsDetailAnswerInp" placeholder="请输入答案">
+            <button class="btn-ui-primary" style="width:100%;margin-top:6px;" onclick="wsCheckDetailAnswer()">验证答案</button>
+            <p id="wsDetailAnswerErr" class="ws-error-msg"></p>
+        </div>
+        <div id="wsDetailContact" style="text-align:center;"></div>
+        <button class="btn-ui-secondary" style="width:100%;margin-top:10px;" onclick="closeM('modalWsProduct')">关闭</button>
+    </div>
+</div>
+
+<!-- 管理后台 -->
+<div id="modalWsAdmin" class="modal">
+    <div class="modal-dialog-wrap modal-dialog-wrap--admin">
+        <button type="button" class="modal-close-fab" onclick="closeM('modalWsAdmin')" aria-label="关闭">×</button>
+        <div class="modal-content modal-admin-scroll">
+            <h3>小作坊管理后台</h3>
+            <div class="ws-admin-section ws-admin-demo-bar">
+                <b>演示 / 测试</b>
+                <p class="ws-admin-hint">无团长或商品时可一键生成演示环境。</p>
+                <button type="button" class="btn-ui-secondary" style="width:100%;margin-bottom:6px;" onclick="wsDemoMakeCurrentUserLeader()">演示：当前账号开通团长</button>
+                <button type="button" class="btn-ui-primary" style="width:100%;" onclick="wsDemoSeedWorkshop()">演示：加载示例团 + 3 件商品（含编号）</button>
+            </div>
+            <div class="ws-admin-section">
+                <b>待审核团长申请</b>
+                <div id="wsAdminApps"></div>
+            </div>
+            <div class="ws-admin-section">
+                <b>团长列表</b>
+                <div id="wsAdminLeaders"></div>
+            </div>
+            <div class="ws-admin-section">
+                <b>创建团（团长最多2个团）</b>
+                <input id="wsAdminGroupLeader" placeholder="团长用户名">
+                <input id="wsAdminGroupName" placeholder="团名">
+                <input type="date" id="wsAdminGroupStart">
+                <input type="date" id="wsAdminGroupEnd">
+                <input type="number" id="wsAdminGroupMax" placeholder="可上架制品数" value="5" min="1">
+                <button class="btn-ui-primary" style="width:100%;margin-top:6px;" onclick="wsAdminAddGroup()">创建团</button>
+            </div>
+            <div class="ws-admin-section">
+                <b>团列表</b>
+                <div id="wsAdminGroups"></div>
+            </div>
+            <div class="ws-admin-section">
+                <b>分类管理（大类 + 小类，逗号分隔小类）</b>
+                <input id="wsAdminCatName" placeholder="大类名，如：娃娃">
+                <input id="wsAdminCatSubs" placeholder="小类：10cm娃,15cm娃">
+                <button class="btn-ui-secondary" style="width:100%;margin-top:6px;" onclick="wsAdminAddCategory()">添加分类</button>
+                <div id="wsAdminCats" style="margin-top:8px;"></div>
+            </div>
+            <div class="ws-admin-section">
+                <b>精品推荐（共 5 个，可混搭）</b>
+                <p class="ws-admin-hint">自由分配：例如 2 个自定义 + 3 个想要榜，或 1 个自定义 + 4 个想要榜。自定义位在前，其余按想要数自动补齐。</p>
+                <div class="ws-carousel-split-row">
+                    <label class="ws-carousel-split-label">
+                        自定义数量
+                        <select id="wsAdminCarouselCustomCount" onchange="wsSetCarouselCustomCount(+this.value)">
+                            <option value="0">0</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                        </select>
+                    </label>
+                    <span id="wsAdminCarouselWantCountLabel" class="ws-carousel-split-want">想要榜：5 个（自动）</span>
+                </div>
+                <div id="wsAdminCarouselCustom" class="ws-admin-carousel-panel">
+                    <b class="ws-admin-carousel-subtitle">自定义商品</b>
+                    <div id="wsAdminCarouselList"></div>
+                    <div class="ws-admin-carousel-add ws-admin-carousel-add--code" id="wsAdminCarouselCodeRow">
+                        <input type="text" id="wsAdminCarouselCodeInp" placeholder="输入编号，如 10001 或 WS-10001">
+                        <button type="button" class="btn-ui-primary" onclick="wsAdminCarouselAddByCode()">按编号添加</button>
+                    </div>
+                    <div class="ws-admin-carousel-add" id="wsAdminCarouselAddRow">
+                        <select id="wsAdminCarouselPick"></select>
+                        <button type="button" class="btn-ui-secondary" onclick="wsAdminCarouselAdd()">从列表添加</button>
+                    </div>
+                </div>
+                <div id="wsAdminCarouselWant" class="ws-admin-carousel-panel">
+                    <b class="ws-admin-carousel-subtitle">想要榜预览（自动）</b>
+                    <div id="wsAdminCarouselWantPreview"></div>
+                </div>
+            </div>
+            <div class="ws-admin-section">
+                <b>制品管理（下架/变灰/推荐）</b>
+                <div id="wsAdminProducts"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================
+     7. 外部库与业务脚本
+========================================= -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="js/core.js"></script>
+<script src="js/quiz-data.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/schedule.js"></script>
+<script src="js/teacher.js"></script>
+<script src="js/extra.js"></script>
+<script src="js/workshop.js"></script>
+
+<!-- 页面加载完成后执行初始化 -->
+<script>
+    // 门禁系统会在 auth.js 中自动初始化
+    // 如果需要自动登录检查，可以在 core.js 的 loadAll 后执行
+    document.addEventListener('DOMContentLoaded', () => {
+        // 确保 Supabase 加载后再初始化
+        if (typeof supabase !== 'undefined') {
+            initGatePage();
+        } else {
+            setTimeout(initGatePage, 500);
+        }
+    });
+</script>
+
+</body>
+</html>
