@@ -290,8 +290,10 @@ function delT(id) {
 }
 
 function toggleTeacherInvite() {
-    const role = document.getElementById("rRole").value;
-    document.getElementById("rInvite").style.display = role === "teacher" ? "block" : "none";
+    const roleEl = document.getElementById("rRole");
+    const inviteEl = document.getElementById("rInvite");
+    if (!roleEl || !inviteEl) return;
+    inviteEl.style.display = roleEl.value === "teacher" ? "block" : "none";
 }
 function generateInviteCode() {
     let code;

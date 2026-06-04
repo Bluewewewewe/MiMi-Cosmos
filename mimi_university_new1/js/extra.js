@@ -328,9 +328,12 @@ async function initApp() {
     toggleTeacherInvite();
 
     // BUG修改记录再次登录无需填写密码：填充记住的登录凭据
-    document.getElementById("lUser").value = localStorage.getItem("rememberedUser") || "";
-    document.getElementById("lPass").value = localStorage.getItem("rememberedPass") || "";
-    document.getElementById("lRole").value = localStorage.getItem("rememberedRole") || "student";
+    const lUserEl = document.getElementById("lUser");
+    const lPassEl = document.getElementById("lPass");
+    const lRoleEl = document.getElementById("lRole");
+    if (lUserEl) lUserEl.value = localStorage.getItem("rememberedUser") || "";
+    if (lPassEl) lPassEl.value = localStorage.getItem("rememberedPass") || "";
+    if (lRoleEl) lRoleEl.value = localStorage.getItem("rememberedRole") || "student";
     updateNowLine();
     setInterval(updateNowLine, 60000);
 

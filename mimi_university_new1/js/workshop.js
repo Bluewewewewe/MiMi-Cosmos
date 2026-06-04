@@ -29,7 +29,68 @@ function wsEscape(s) {
 
 function wsDefaultData() {
     return {
-        disclaimer: "【占位】米米宇宙免责说明\n\n1. 本平台仅提供制品展示与开团信息汇总，不参与交易、收款与物流。\n2. 团长与购买者之间的沟通、付款、售后由双方自行负责。\n3. 制品图片与描述由团长上传，平台不对内容真实性作担保。\n4. 更多条款待补充……\n\n请仔细阅读以上内容。",
+        disclaimer: `<div class="disclaimer-doc">
+<h3>法律免责声明</h3>
+<p class="disclaimer-basis">本声明依据《中华人民共和国民法典》、《中华人民共和国电子商务法》、《信息网络传播权保护条例》及相关司法解释制定，具有法律约束力。</p>
+
+<div class="disclaimer-section">
+<h4>一、服务性质界定</h4>
+<ol>
+<li>本平台仅为开团信息免费汇总、展示、传播的<strong>中立信息存储空间服务提供者</strong>，不从事商品销售、拼团组织、收款结算、物流配送、售后服务等任何交易行为，不构成电商经营者、销售方、担保方或居间方。</li>
+<li>平台不主动审核、核验、担保任何团长身份、资质、授权、履约能力、信誉状况；不审核、不担保任何开团商品的来源、质量、数量、真伪、合规性、安全性、价格合理性、售后保障等信息。</li>
+<li>平台不参与分润、不保管交易资金、不介入交易磋商与履行，与团长、用户之间不存在合伙、委托、代理、雇佣等关系。</li>
+</ol>
+</div>
+
+<div class="disclaimer-section">
+<h4>二、信息真实性与合法性免责</h4>
+<ol>
+<li>平台展示的开团标题、商品描述、规格、价格、库存、发货周期、团长联系方式、参团规则等全部内容，均由团长自行发布、上传、提供，平台未修改、未编辑、未增删核心交易信息。</li>
+<li>平台对前述信息的真实性、准确性、完整性、合法性、时效性<strong>不作任何明示或默示保证</strong>，不承担任何虚假宣传、误导消费、侵权违约等相关责任。</li>
+<li>用户应自行审慎核实团长身份、商品授权、质检报告、售后政策、退款规则等全部交易要素，自愿判断并承担交易风险。</li>
+</ol>
+</div>
+
+<div class="disclaimer-section">
+<h4>三、交易责任与风险承担</h4>
+<ol>
+<li>用户基于本平台信息自愿参与拼团、支付款项、达成交易，均视为<strong>自主决策、自担风险</strong>，与本平台无任何法律关联。</li>
+<li>因开团交易产生的一切纠纷与损失，包括但不限于：货不对板、质量瑕疵、漏发错发、延迟发货、虚假发货、拒绝售后、退款不能、团长失联跑路、资金损失、人身财产损害、知识产权侵权等，均由用户与团长自行协商解决、自行承担责任。</li>
+<li>本平台不承担任何法律责任、违约赔偿责任、侵权责任、连带责任、补充赔偿责任、垫付责任或兜底责任，亦无义务介入调解、举证、维权或赔偿等。</li>
+</ol>
+</div>
+
+<div class="disclaimer-section">
+<h4>四、平台权利与义务边界</h4>
+<ol>
+<li>平台仅在收到权利人有效侵权通知并提供初步证据后，依法对涉嫌侵权信息采取删除、屏蔽、断开链接等必要措施，此举不代表平台承认过错或承担责任，仅为履行法定义务。</li>
+<li>平台有权自行判断并删除违法、违规、侵权、投诉较多或不适宜展示的信息，但无事先审查及持续监控义务，不因此产生担保或注意义务。</li>
+<li>平台不提供交易资金托管、担保交易、履约保证等金融或信用服务，用户与团长的资金往来、交付安排均由双方自行负责。</li>
+</ol>
+</div>
+
+<div class="disclaimer-section">
+<h4>五、责任限制与免责</h4>
+<ol>
+<li>在法律允许的最大范围内，平台明示排除所有明示或默示保证，包括但不限于适销性、特定用途适用性、无权利瑕疵、无安全缺陷等。</li>
+<li>平台不对任何直接、间接、偶然、特殊、后续或惩罚性损失承担责任，包括但不限于利润损失、商誉损失、数据损失、机会损失等，即使平台已被告知该等损失的可能性。</li>
+<li>因不可抗力、第三方行为、用户自身过错、团长过错导致的一切不利后果，均与本平台无关。</li>
+</ol>
+</div>
+
+<div class="disclaimer-section">
+<h4>六、用户使用与同意条款</h4>
+<ol>
+<li>凡浏览、查阅、复制、转发、参与本平台任何开团信息，即视为已阅读、充分理解并<strong>不可撤销同意</strong>本免责声明全部条款，自愿接受约束。</li>
+<li>用户如不同意本声明，应立即停止使用本平台，并删除相关信息。</li>
+<li>本声明可依法更新，一经公示即生效；用户继续使用视为接受更新后版本。</li>
+</ol>
+</div>
+
+<div class="disclaimer-notice">
+<p><strong>重要法律提示：</strong>拼团交易存在资金安全、商品质量、履约保障等多重风险，请谨慎甄别、理性参与、保障自身合法权益。</p>
+</div>
+</div>`,
         applyDocUrl: "#placeholder-word-doc",
         applyEmail: "leader-apply@placeholder.com",
         categories: [
@@ -148,6 +209,40 @@ function wsLoad() {
     if (!wsData.disclaimer) wsData.disclaimer = wsDefaultData().disclaimer;
     wsEnsureCarouselConfig();
     wsEnsureProductCodes();
+    // 异步从 API 拉取最新商品数据
+    wsSyncProductsFromAPI();
+}
+
+async function wsSyncProductsFromAPI() {
+    try {
+        const data = await apiGetProducts();
+        if (data.products && data.products.length > 0) {
+            // 用 API 数据替换本地商品列表
+            wsData.products = data.products.map(p => ({
+                id: p.id,
+                name: p.name,
+                image: p.image_url || "",
+                desc: p.description || "",
+                price: p.price || "",
+                groupId: p.group_id || "",
+                category: p.category || "其他",
+                subCategory: p.sub_category || "",
+                hasQuestion: p.has_question || false,
+                question: p.question || "",
+                answer: p.answer || "",
+                contactImage: p.contact_image_url || "",
+                status: p.status || "online",
+                wantCount: p.want_count || 0,
+                code: p.code || "",
+                leaderUid: p.leader_uid || "",
+            }));
+            wsSave();
+            wsRenderProductGrid();
+            wsRenderCarousel();
+        }
+    } catch (err) {
+        console.warn("从API同步商品数据失败，使用本地数据:", err);
+    }
 }
 
 function wsSave() {
@@ -281,9 +376,15 @@ function wsCarouselModeLabel() {
 
 function wsReadFileAsDataURL(input, cb) {
     if (!input.files?.[0]) return;
-    const r = new FileReader();
-    r.onload = (e) => cb(e.target.result);
-    r.readAsDataURL(input.files[0]);
+    // 优先使用 API 上传到对象存储，失败则回退到 base64
+    apiUploadImage(input.files[0])
+        .then((url) => cb(url))
+        .catch((err) => {
+            console.warn("图片上传失败，回退到本地存储:", err);
+            const r = new FileReader();
+            r.onload = (e) => cb(e.target.result);
+            r.readAsDataURL(input.files[0]);
+        });
 }
 
 /* ========== 登录 ========== */
@@ -308,7 +409,7 @@ function wsAfterLogin() {
     const disp = document.getElementById("wsUserDisp");
     if (disp) disp.textContent = `${wsUser.name} (${wsUser.uid})`;
     wsUpdateToolbar();
-    wsShowDisclaimer();
+    wsShowDisclaimer(true);
 }
 
 function wsTryAutoLogin() {
@@ -358,7 +459,7 @@ function wsEnterPage() {
     wsLoad();
     wsSyncFromMain();
     wsUpdateToolbar();
-    wsShowDisclaimer();
+    wsShowDisclaimer(true);
 }
 
 function wsLeavePage() {
@@ -367,8 +468,8 @@ function wsLeavePage() {
 }
 
 /* ========== 免责弹窗 ========== */
-function wsShowDisclaimer() {
-    if (sessionStorage.getItem("ws_disclaimer_ok")) {
+function wsShowDisclaimer(forceShow) {
+    if (!forceShow && sessionStorage.getItem("ws_disclaimer_ok")) {
         wsRenderAll();
         return;
     }
@@ -378,7 +479,7 @@ function wsShowDisclaimer() {
         wsRenderAll();
         return;
     }
-    body.textContent = wsData.disclaimer;
+    body.innerHTML = wsData.disclaimer;
     body.onscroll = wsCheckDisclaimerScroll;
     btn.disabled = true;
     btn.classList.remove("btn-ui-primary");
@@ -407,6 +508,10 @@ function wsCloseDisclaimer() {
     sessionStorage.setItem("ws_disclaimer_ok", "1");
     closeM("modalWsDisclaimer");
     wsRenderAll();
+}
+
+function wsReShowDisclaimer() {
+    wsShowDisclaimer(true);
 }
 
 /* ========== 渲染 ========== */
@@ -680,8 +785,8 @@ function wsOpenLeaderApply() {
     const modal = document.getElementById("modalWsLeaderApply");
     if (!doc || !email || !note || !modal) return;
     doc.href = wsData.applyDocUrl || "#";
-    doc.textContent = "📄 团长申请说明文档（占位）";
-    email.textContent = `联系邮箱（占位）：${wsData.applyEmail || "待设置"}`;
+    doc.textContent = "📄 团长申请说明文档";
+    email.textContent = `联系邮箱：${wsData.applyEmail || "待设置"}`;
     note.value = "";
     wsRenderLeaderApplyStatus();
     modal.style.display = "flex";
@@ -1068,16 +1173,28 @@ function wsAdminCarouselSetBanner(pid) {
     input.accept = "image/*";
     input.onchange = () => {
         if (!input.files?.[0]) return;
-        const r = new FileReader();
-        r.onload = (e) => {
-            wsData.carouselConfig.banners = wsData.carouselConfig.banners || {};
-            wsData.carouselConfig.banners[pid] = e.target.result;
-            wsSave();
-            wsRenderAdminCarousel();
-            wsRenderCarousel();
-            alert("推荐大图已设置");
-        };
-        r.readAsDataURL(input.files[0]);
+        apiUploadImage(input.files[0])
+            .then((url) => {
+                wsData.carouselConfig.banners = wsData.carouselConfig.banners || {};
+                wsData.carouselConfig.banners[pid] = url;
+                wsSave();
+                wsRenderAdminCarousel();
+                wsRenderCarousel();
+                alert("推荐大图已设置");
+            })
+            .catch((err) => {
+                console.warn("图片上传失败，回退到本地:", err);
+                const r = new FileReader();
+                r.onload = (e) => {
+                    wsData.carouselConfig.banners = wsData.carouselConfig.banners || {};
+                    wsData.carouselConfig.banners[pid] = e.target.result;
+                    wsSave();
+                    wsRenderAdminCarousel();
+                    wsRenderCarousel();
+                    alert("推荐大图已设置");
+                };
+                r.readAsDataURL(input.files[0]);
+            });
     };
     input.click();
 }

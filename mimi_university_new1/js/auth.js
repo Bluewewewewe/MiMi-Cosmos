@@ -1,8 +1,7 @@
 // ==================== 粉丝门禁系统 ====================
 // V2.0 - 微博验证 + 答题验证 + 超话等级检查
 
-const SUPABASE_URL = "https://abdjwwhwpuvvfvenvmtx.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_lhJEVj76ZpvRuf2XRoB31A_lLHDuAdf";
+// SUPABASE_URL 和 SUPABASE_ANON_KEY 已在 core.js 中声明，此处不再重复
 const TOKEN_KEY = "mimi_gate_token";
 const QUIZ_PASSED_KEY = "mimi_quiz_passed";
 const WEIBO_UID_KEY = "mimi_weibo_uid";
@@ -349,10 +348,18 @@ function autoLogin() {
         enterMainPage();
         return true;
     }
-    // token过期但答题已通过，直接跳到微博验证
+
+    // 开发模式：跳过微博验证，答题通过后直接进入主页
     if (localStorage.getItem(QUIZ_PASSED_KEY) === 'yes') {
-        gateStep = 2;
+        gateRegisterSuccess('dev_user', {
+            weiboName: '米米测试用户',
+            avatarUrl: '',
+            chaohuaLevel: 10
+        });
+        enterMainPage();
+        return true;
     }
+
     showGateStep(gateStep);
     return false;
 }

@@ -1,0 +1,11 @@
+[project]
+entrypoint = "mimi_university_new1/index.html"
+requires = ["nodejs-24"]
+
+[dev]
+build = ["pnpm", "install"]
+run = ["node", "server.mjs"]
+
+[deploy]
+build = ["pnpm", "install"]
+run = ["node", "server.mjs"]

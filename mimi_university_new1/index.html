@@ -271,6 +271,7 @@
     <div id="pageW" class="container ws-page" style="display:none;">
         <div class="ws-page-top-bar">
             <div class="ws-page-actions">
+                <button type="button" class="btn-ui-secondary ws-toolbar-btn" onclick="wsReShowDisclaimer()">免责声明</button>
                 <button type="button" class="btn-ui-secondary ws-toolbar-btn" onclick="wsOpenLeaderApply()">团长申请</button>
                 <button type="button" id="wsListBtn" class="btn-ui-primary ws-toolbar-btn" style="display:none;" onclick="wsOpenListModal()">我要上架</button>
                 <button type="button" id="wsAdminBtn" class="btn-ui-primary ws-toolbar-btn" style="display:none;" onclick="wsOpenAdmin()">管理后台</button>
@@ -567,8 +568,8 @@
         <h3>团长申请</h3>
         <div id="wsLeaderApplyStatus" class="ws-leader-apply-status"></div>
         <p style="font-size:12px;color:#666;">流程：提交申请 → 管理员审核 → 为您创建团 → 使用「我要上架」</p>
-        <p style="font-size:12px;color:#666;">请下载说明文档填写后，发送至下方邮箱（内容占位，待确定）</p>
-        <a id="wsApplyDoc" href="#" target="_blank" class="btn-ui-secondary" style="display:block;text-align:center;margin:10px 0;">📄 团长申请说明文档（占位）</a>
+        <p style="font-size:12px;color:#666;">请下载说明文档填写后，发送至下方邮箱</p>
+        <a id="wsApplyDoc" href="#" target="_blank" class="btn-ui-secondary" style="display:block;text-align:center;margin:10px 0;">📄 团长申请说明文档</a>
         <p id="wsApplyEmail" style="font-size:13px;background:#f8ffe6;padding:10px;border-radius:8px;"></p>
         <textarea id="wsApplyNote" placeholder="在此简述申请说明、拟开团名（最多2个团）等…" style="min-height:80px;"></textarea>
         <button class="btn-ui-primary" style="width:100%;margin-top:8px;" onclick="wsSubmitLeaderApply()">提交申请</button>
@@ -724,10 +725,6 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="core.js"></script>
-
 <!-- ========================================
      8. 聊天组件
 ========================================= -->
@@ -751,6 +748,7 @@
 ========================================= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="js/api.js"></script>
 <script src="js/core.js"></script>
 <script src="js/quiz-data.js"></script>
 <script src="js/auth.js"></script>
@@ -758,11 +756,6 @@
 <script src="js/teacher.js"></script>
 <script src="js/extra.js"></script>
 <script src="js/workshop.js"></script>
-
-<!-- 页面加载完成后执行自动登录 -->
-<script>
-    autoLogin();
-</script>
 
 </body>
 </html>
