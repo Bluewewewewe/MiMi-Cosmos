@@ -554,10 +554,10 @@ app.post("/api/verify-weibo", async (req, res) => {
     const bioMatch = bio.toUpperCase().includes(expectedCode.toUpperCase());
 
     // 检查超话等级 - 通过移动端 API
-    const chaohuaId = "1008085055c3f1b0f459c3a9e2aa66cf0be0fd";
+    const chaohuaId = "1008085cf0862440cd3b74d986d8f0618870e0";
     try {
       // 查用户是否关注了该超话及等级
-      const chaohuaApiUrl = `https://m.weibo.cn/api/container/getIndex?containerid=1008085055c3f1b0f459c3a9e2aa66cf0be0fd_-_followers&page_type=pageuser&luicode=10000011&lfid=${uid}`;
+      const chaohuaApiUrl = `https://m.weibo.cn/api/container/getIndex?containerid=1008085cf0862440cd3b74d986d8f0618870e0_-_followers&page_type=pageuser&luicode=10000011&lfid=${uid}`;
       const chaohuaResp = await fetch(chaohuaApiUrl, {
         headers: {
           "User-Agent":
@@ -587,7 +587,7 @@ app.post("/api/verify-weibo", async (req, res) => {
         if (!isCPFan && cards.length > 0) {
           // 尝试直接查用户超话关系
           try {
-            const checkUrl = `https://m.weibo.cn/api/container/getIndex?containerid=1008085055c3f1b0f459c3a9e2aa66cf0be0fd_-_member_${uid}`;
+            const checkUrl = `https://m.weibo.cn/api/container/getIndex?containerid=1008085cf0862440cd3b74d986d8f0618870e0_-_member_${uid}`;
             const checkResp = await fetch(checkUrl, {
               headers: {
                 "User-Agent":
