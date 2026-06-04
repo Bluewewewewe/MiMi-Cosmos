@@ -430,6 +430,20 @@ function wsTryAutoLogin() {
     wsAfterLogin();
 }
 
+/** 管理员：设置微博Cookie */
+function wsAdminSetCookie() {
+    const current = localStorage.getItem("mimi_weibo_sub_cookie") || "";
+    const val = prompt("请粘贴微博 SUB Cookie 值（_2A25开头）：", current);
+    if (val === null) return;
+    if (val.trim()) {
+        localStorage.setItem("mimi_weibo_sub_cookie", val.trim());
+        alert("Cookie 已保存！立即生效。");
+    } else {
+        localStorage.removeItem("mimi_weibo_sub_cookie");
+        alert("Cookie 已清除。");
+    }
+}
+
 /** 内嵌主站：与课程表等平行 */
 function wsSyncFromMain() {
     if (typeof currentUser !== "undefined" && currentUser) {

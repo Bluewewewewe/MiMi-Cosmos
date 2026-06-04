@@ -410,7 +410,112 @@ app.put("/api/leader-applications/:id", async (req, res) => {
   }
 });
 
-// ==================== 微博验证 API ====================
+// ==================== 微博 Cookie 管理 ====================
+// 运行时存储 Cookie（重启服务后需要重新设置）
+let runtimeWeiboCookie = "";
+
+// ============================================================
+// 管理后台：设置微博Cookie（暂不可用，保留接口）
+// ============================================================
+app.post("/api/admin/weibo-cookie", (req, res) => {
+  const { cookie } = req.body;
+  if (!cookie) return res.status(400).json({ error: "Cookie 不能为空" });
+  runtimeWeiboCookie = cookie;
+  console.log("[微博Cookie] 已更新");
+  res.json({ success: true, message: "微博 Cookie 已更新" });
+});
+
+app.get("/api/admin/weibo-cookie-status", (req, res) => {
+  res.json({ hasCookie: !!(runtimeWeiboCookie || process.env.WEIBO_SUB_COOKIE) });
+});
+
+// ==================== 浏览器端验证代理（用户在自己浏览器中调用） ====================
+app.post("/api/verify-weibo-browser", async (req, res) => {
+  const { uid, code } = req.body;
+  if (!uid || !/^\d+$/.test(uid)) {
+    return res.status(400).json({ error: "无效的UID" });
+  }
+
+  const result = { uid, bioMatch: false, isCPFan: false, chaohuaLevel: 0, weiboName: "", avatarUrl: "", code };
+
+  try {
+    // 获取用户信息
+    const infoResp = await fetch(`https://weibo.com/ajax/profile/info?uid=${uid}`, {
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120", "Referer": "https://weibo.com/" }
+    });
+    const infoData = await infoResp.json();
+    if (infoData.ok === 1 && infoData.data && infoData.data.user) {
+      const user = infoData.data.user;
+      result.weiboName = user.screen_name || "";
+      result.avatarUrl = user.avatar_hd || user.avatar_large || "";
+      const bio = user.description || "";
+      result.bioMatch = bio.includes(code);
+
+      // 检查超话
+      try {
+        const chResp = await fetch(`https://weibo.com/ajax/profile/topicContent?tabid=231583&uid=${uid}`, {
+          headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120", "Referer": "https://weibo.com/" }
+        });
+        const chData = await chResp.json();
+        if (chData.data && chData.data.list) {
+          for (const item of chData.data.list) {
+            if (item.containerid && item.containerid.includes("1008085cf0862440cd3b74d986d8f0618870e0")) {
+              result.isCPFan = true;
+              result.chaohuaLevel = item.level || 0;
+              break;
+            }
+          }
+        }
+      } catch (e) { console.error("超话检查失败:", e.message); }
+    }
+  } catch (e) { console.error("用户信息获取失败:", e.message); }
+
+  res.json(result);
+});
+
+// ==================== 提交浏览器验证结果 ====================
+app.post("/api/verify-weibo-result", async (req, res) => {
+  const { uid, verifyData } = req.body;
+  if (!uid || !verifyData) {
+    return res.status(400).json({ error: "参数缺失" });
+  }
+
+  // 验证数据完整性
+  const code = localStorage_getCode(uid);
+  if (code && verifyData.code !== code) {
+    return res.json({ success: false, reason: "验证码不匹配" });
+  }
+
+  if (!verifyData.bioMatch) {
+    return res.json({ success: false, reason: "简介验证码不匹配，请确认已将验证码写入微博简介" });
+  }
+  if (!verifyData.isCPFan) {
+    return res.json({ success: false, reason: "未加入栩你渝生超话" });
+  }
+  if (verifyData.chaohuaLevel < 7) {
+    return res.json({ success: false, reason: "超话等级不足7级（当前：" + (verifyData.chaohuaLevel || 0) + "级）" });
+  }
+
+  // 验证通过，将结果写入数据库
+  try {
+    await supabase.from("users").upsert({
+      id: uid,
+      weibo_uid: uid,
+      weibo_name: verifyData.weiboName || "",
+      avatar_url: verifyData.avatarUrl || "",
+      chaohua_level: verifyData.chaohuaLevel || 0,
+      is_admin: false
+    });
+  } catch (e) { console.error("保存用户失败:", e); }
+
+  res.json({ success: true });
+});
+
+// 简单的验证码存储（生产环境应存数据库）
+const codeStore = {};
+function localStorage_getCode(uid) { return codeStore[uid]; }
+
+// ==================== 微博验证 API（服务器端，需要Cookie） ====================
 app.post("/api/verify-weibo", async (req, res) => {
   const { uid, expectedCode } = req.body;
 
@@ -423,7 +528,7 @@ app.post("/api/verify-weibo", async (req, res) => {
 
   try {
     // 爬取微博用户主页获取简介
-    const weiboSubCookie = process.env.WEIBO_SUB_COOKIE || "_2A25HJecSDeRhGe9O71sW9ijEzzWIHXVkW2barDV8PUJbkNAYLU_akW1NdNCJh4OrnUD91cvFXT4ZihGg2QSUBQmS";
+    const weiboSubCookie = runtimeWeiboCookie || process.env.WEIBO_SUB_COOKIE || "";
     let weiboName = "";
     let avatarUrl = "";
     let bio = "";
@@ -553,58 +658,103 @@ app.post("/api/verify-weibo", async (req, res) => {
     // 检查简介中是否包含验证码
     const bioMatch = bio.toUpperCase().includes(expectedCode.toUpperCase());
 
-    // 检查超话等级 - 通过移动端 API
+    // 检查超话等级 - 通过PC端 API
     const chaohuaId = "1008085cf0862440cd3b74d986d8f0618870e0";
     try {
-      // 查用户是否关注了该超话及等级
-      const chaohuaApiUrl = `https://m.weibo.cn/api/container/getIndex?containerid=1008085cf0862440cd3b74d986d8f0618870e0_-_followers&page_type=pageuser&luicode=10000011&lfid=${uid}`;
+      // 方法1：PC端查用户是否关注该超话
+      const chaohuaApiUrl = `https://weibo.com/ajax/profile/topicContent?tabid=1008085cf0862440cd3b74d986d8f0618870e0&uid=${uid}`;
+      console.log("[微博验证] 尝试PC端超话API:", chaohuaApiUrl);
       const chaohuaResp = await fetch(chaohuaApiUrl, {
         headers: {
-          "User-Agent":
-            "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120",
           Accept: "application/json, text/plain, */*",
           Cookie: `SUB=${weiboSubCookie}`,
-          Referer: `https://m.weibo.cn/p/${chaohuaId}`,
+          Referer: `https://weibo.com/p/${chaohuaId}`,
         },
         signal: AbortSignal.timeout(10000),
       });
 
       if (chaohuaResp.ok) {
-        const chaohuaData = await chaohuaResp.json();
-        const cards = chaohuaData?.data?.cards || [];
-        for (const card of cards) {
-          const userCard = card?.user;
-          if (userCard && String(userCard.id) === String(uid)) {
+        const rawText = await chaohuaResp.text();
+        console.log("[微博验证] 超话API status:", chaohuaResp.status, "body前300字:", rawText.substring(0, 300));
+        if (rawText.startsWith("{")) {
+          const chaohuaData = JSON.parse(rawText);
+          // 检查是否返回了有效数据
+          if (chaohuaData?.ok === 1 || chaohuaData?.data) {
             isCPFan = true;
-            // 尝试从 card_group 提取等级
-            const levelBadge = card?.desc || "";
-            const levelMatch = levelBadge.match(/(\d+)/);
-            if (levelMatch) chaohuaLevel = parseInt(levelMatch[1]);
-            break;
+            // 尝试提取等级
+            const level = chaohuaData?.data?.level || chaohuaData?.data?.badge_level;
+            if (level) chaohuaLevel = parseInt(level);
           }
         }
-        // 如果第一页没找到，也标记为可能关注（可能在后面的页）
-        if (!isCPFan && cards.length > 0) {
-          // 尝试直接查用户超话关系
-          try {
-            const checkUrl = `https://m.weibo.cn/api/container/getIndex?containerid=1008085cf0862440cd3b74d986d8f0618870e0_-_member_${uid}`;
-            const checkResp = await fetch(checkUrl, {
-              headers: {
-                "User-Agent":
-                  "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15",
-                Cookie: `SUB=${weiboSubCookie}`,
-              },
-              signal: AbortSignal.timeout(8000),
-            });
-            if (checkResp.ok) {
-              const checkData = await checkResp.json();
-              if (checkData?.data) {
-                isCPFan = true;
-                const lvl = checkData.data.level || checkData.data.badge_level;
-                if (lvl) chaohuaLevel = parseInt(lvl);
+      }
+
+      // 方法2：如果方法1没拿到，用移动端API查用户超话列表
+      if (!isCPFan && weiboSubCookie) {
+        try {
+          const userChaohuaUrl = `https://m.weibo.cn/api/container/getIndex?containerid=100505${uid}_-_chaohua`;
+          console.log("[微博验证] 尝试移动端用户超话列表:", userChaohuaUrl);
+          const ucResp = await fetch(userChaohuaUrl, {
+            headers: {
+              "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15",
+              Accept: "application/json, text/plain, */*",
+              Cookie: `SUB=${weiboSubCookie}`,
+              Referer: `https://m.weibo.cn/u/${uid}`,
+            },
+            signal: AbortSignal.timeout(8000),
+          });
+          if (ucResp.ok) {
+            const ucText = await ucResp.text();
+            if (ucText.startsWith("{")) {
+              const ucData = JSON.parse(ucText);
+              const cards = ucData?.data?.cards || [];
+              for (const card of cards) {
+                const cardGroup = card?.card_group || [];
+                for (const item of cardGroup) {
+                  const titleSub = item?.title_sub || "";
+                  const itemId = item?.scheme?.match(/100808([a-f0-9]+)/)?.[0] || "";
+                  // 匹配超话名或ID
+                  if (titleSub.includes("栩你渝生") || itemId === chaohuaId) {
+                    isCPFan = true;
+                    const desc = item?.desc || "";
+                    const lvMatch = desc.match(/(\d+)/);
+                    if (lvMatch) chaohuaLevel = parseInt(lvMatch[1]);
+                    break;
+                  }
+                }
+                if (isCPFan) break;
               }
             }
-          } catch (e2) { /* 忽略 */ }
+          }
+        } catch (e3) {
+          console.log("[微博验证] 移动端超话列表获取失败:", e3.message);
+        }
+      }
+
+      // 方法3：直接查超话成员页（PC端）
+      if (!isCPFan) {
+        try {
+          const memberUrl = `https://weibo.com/p/${chaohuaId}/super_followers?uid=${uid}`;
+          console.log("[微博验证] 尝试PC端超话成员页:", memberUrl);
+          const memberResp = await fetch(memberUrl, {
+            headers: {
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120",
+              Accept: "application/json, text/plain, */*",
+              "X-Requested-With": "XMLHttpRequest",
+              Cookie: `SUB=${weiboSubCookie}`,
+              Referer: `https://weibo.com/p/${chaohuaId}`,
+            },
+            signal: AbortSignal.timeout(8000),
+          });
+          if (memberResp.ok) {
+            const memberText = await memberResp.text();
+            console.log("[微博验证] 成员页前200字:", memberText.substring(0, 200));
+            if (memberText.includes(uid)) {
+              isCPFan = true;
+            }
+          }
+        } catch (e4) {
+          console.log("[微博验证] PC端成员页获取失败:", e4.message);
         }
       }
     } catch (e) {

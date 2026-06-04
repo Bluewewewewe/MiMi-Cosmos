@@ -220,36 +220,125 @@ async function doVerify() {
     }
 
     try {
-        // 调用后端 API 验证微博
+        // 方案1: 尝试后端 API 验证（需要服务器端有有效Cookie）
+        const savedCookie = localStorage.getItem('weibo_sub_cookie') || '';
         const resp = await fetch('/api/verify-weibo', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ uid: uid, expectedCode: generatedCode })
+            body: JSON.stringify({ uid: uid, expectedCode: generatedCode, cookie: savedCookie })
         });
 
         const data = await resp.json();
 
-        if (data.bioMatch && data.isCPFan && data.chaohuaLevel >= 7) {
-            // 验证通过
-            gateRegisterSuccess(uid, data);
+        // 如果后端成功获取到微博数据
+        if (data.weiboName) {
+            if (data.bioMatch && data.isCPFan && data.chaohuaLevel >= 7) {
+                gateRegisterSuccess(uid, data);
+            } else {
+                var reason = '';
+                if (!data.bioMatch) reason += '简介验证码不匹配（请确认已修改简介）\n';
+                if (!data.isCPFan) reason += '未加入栩你渝生超话\n';
+                if (data.chaohuaLevel < 7) reason += '超话等级不足7级（当前：' + (data.chaohuaLevel || 0) + '级）\n';
+                alert('验证未通过：\n' + reason);
+            }
         } else {
-            // 验证失败，给出具体原因
-            var reason = '';
-            if (!data.bioMatch) reason += '简介验证码不匹配（请确认已修改简介）\n';
-            if (!data.isCPFan) reason += '未加入栩你渝生超话\n';
-            if (data.chaohuaLevel < 7) reason += '超话等级不足7级（当前：' + (data.chaohuaLevel || 0) + '级）\n';
-            alert('验证未通过：\n' + reason);
+            // 方案2: 后端无法获取数据（Cookie无效），切换到浏览器端验证
+            showBrowserVerify(uid, generatedCode);
         }
     } catch (err) {
         console.error('验证失败:', err);
-        // 降级：如果Edge Function不可用，暂时允许通过（仅验证码匹配）
-        alert('验证服务暂时不可用，请稍后再试\n错误: ' + err.message);
+        // 网络错误也切换到浏览器端验证
+        showBrowserVerify(uid, generatedCode);
     } finally {
         if (verifyBtn) {
             verifyBtn.disabled = false;
             verifyBtn.textContent = '🔍 验证';
         }
     }
+}
+
+// ==================== 浏览器端验证（Cookie在用户浏览器中有效） ====================
+function showBrowserVerify(uid, code) {
+    var step2 = document.getElementById('gateStep2');
+    if (!step2) return;
+
+    step2.innerHTML =
+        '<div style="text-align:center;padding:20px;">' +
+        '<h3 style="color:#c0e070;margin-bottom:15px;">📋 浏览器端验证</h3>' +
+        '<p style="color:#aaa;margin-bottom:10px;font-size:14px;">服务器无法直接访问微博，请按以下步骤操作：</p>' +
+
+        '<div style="background:rgba(255,255,255,0.05);border-radius:12px;padding:15px;margin:10px 0;text-align:left;font-size:13px;line-height:1.8;">' +
+        '<p><b style="color:#c0e070;">步骤1：</b>确保你已将验证码 <b style="color:#ff6b6b;font-size:16px;">' + code + '</b> 写入微博简介</p>' +
+        '<p><b style="color:#c0e070;">步骤2：</b>点击下方按钮打开微博页面</p>' +
+        '<p><b style="color:#c0e070;">步骤3：</b>在微博页面按 F12 → Console（控制台）</p>' +
+        '<p><b style="color:#c0e070;">步骤4：</b>复制下方代码，粘贴到控制台并回车</p>' +
+        '<p><b style="color:#c0e070;">步骤5：</b>将弹出的验证结果复制回来</p>' +
+        '</div>' +
+
+        '<div style="margin:10px 0;">' +
+        '<a href="https://weibo.com/u/' + uid + '" target="_blank" style="display:inline-block;background:#ff8200;color:white;padding:10px 25px;border-radius:8px;text-decoration:none;margin:5px;">打开我的微博主页</a>' +
+        '<a href="https://weibo.com/p/1008085cf0862440cd3b74d986d8f0618870e0" target="_blank" style="display:inline-block;background:#ff6b6b;color:white;padding:10px 25px;border-radius:8px;text-decoration:none;margin:5px;">打开栩你渝生超话</a>' +
+        '</div>' +
+
+        '<div style="background:#1a1a2e;border-radius:8px;padding:10px;margin:10px 0;text-align:left;position:relative;">' +
+        '<button onclick="copyVerifyScript()" style="position:absolute;top:5px;right:5px;background:#c0e070;color:#000;border:none;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:12px;">复制代码</button>' +
+        '<code id="verifyScript" style="font-size:11px;color:#c0e070;word-break:break-all;white-space:pre-wrap;display:block;padding-right:60px;">' + getVerifyScript(uid, code) + '</code>' +
+        '</div>' +
+
+        '<div style="margin:15px 0;">' +
+        '<p style="color:#aaa;font-size:13px;margin-bottom:8px;">粘贴验证结果：</p>' +
+        '<textarea id="browserVerifyResult" placeholder="在此粘贴控制台输出的验证结果..." style="width:90%;height:80px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:white;padding:10px;font-size:12px;resize:none;"></textarea>' +
+        '</div>' +
+
+        '<button onclick="submitBrowserVerify()" style="background:#c0e070;color:#000;border:none;padding:12px 30px;border-radius:8px;cursor:pointer;font-size:15px;font-weight:bold;">提交验证</button>' +
+        '<button onclick="showGateStep(2)" style="background:transparent;color:#aaa;border:1px solid rgba(255,255,255,0.2);padding:12px 20px;border-radius:8px;cursor:pointer;font-size:13px;margin-left:10px;">返回重试</button>' +
+        '</div>';
+}
+
+function getVerifyScript(uid, code) {
+    var domain = window.location.origin;
+    return "fetch('" + domain + "/api/verify-weibo-browser',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid:'" + uid + "',code:'" + code + "'})}).then(r=>r.json()).then(d=>{prompt('请复制以下验证结果：',JSON.stringify(d))}).catch(e=>alert('错误:'+e.message))";
+}
+
+function copyVerifyScript() {
+    var script = document.getElementById('verifyScript');
+    if (script) {
+        navigator.clipboard.writeText(script.textContent).then(function() {
+            alert('代码已复制！请到微博页面的控制台粘贴执行');
+        });
+    }
+}
+
+async function submitBrowserVerify() {
+    var resultEl = document.getElementById('browserVerifyResult');
+    if (!resultEl || !resultEl.value.trim()) {
+        alert('请粘贴验证结果');
+        return;
+    }
+
+    try {
+        var data = JSON.parse(resultEl.value.trim());
+        var uid = document.getElementById('weiboUid') ?
+            (document.getElementById('weiboUid').value.trim() || localStorage.getItem('mimi_weibo_uid')) :
+            localStorage.getItem('mimi_weibo_uid');
+
+        // 提交到后端验证结果
+        var resp = await fetch('/api/verify-weibo-result', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ uid: uid, verifyData: data })
+        });
+        var result = await resp.json();
+
+        if (result.success) {
+            gateRegisterSuccess(uid, data);
+        } else {
+            alert('验证未通过：' + (result.reason || '信息不匹配'));
+        }
+    } catch (e) {
+        alert('验证结果格式错误，请重新复制：' + e.message);
+    }
+}
 }
 
 function gateRegisterSuccess(uid, weiboData) {
