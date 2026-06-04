@@ -339,7 +339,6 @@ async function submitBrowserVerify() {
         alert('验证结果格式错误，请重新复制：' + e.message);
     }
 }
-}
 
 function gateRegisterSuccess(uid, weiboData) {
     // 生成token
