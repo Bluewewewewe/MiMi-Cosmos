@@ -423,91 +423,189 @@ app.post("/api/verify-weibo", async (req, res) => {
 
   try {
     // 爬取微博用户主页获取简介
-    const weiboUrl = `https://weibo.com/u/${uid}`;
-    const profileResp = await fetch(weiboUrl, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-        "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
-      },
-      redirect: "follow",
-      signal: AbortSignal.timeout(10000),
-    });
-
-    if (!profileResp.ok) {
-      return res.json({
-        bioMatch: false,
-        isCPFan: false,
-        chaohuaLevel: 0,
-        weiboName: "",
-        avatarUrl: "",
-        error: `微博页面请求失败 (HTTP ${profileResp.status})`,
-      });
-    }
-
-    const html = await profileResp.text();
-
-    // 从页面中提取用户信息
+    const weiboSubCookie = process.env.WEIBO_SUB_COOKIE || "_2A25HJecSDeRhGe9O71sW9ijEzzWIHXVkW2barDV8PUJbkNAYLU_akW1NdNCJh4OrnUD91cvFXT4ZihGg2QSUBQmS";
     let weiboName = "";
     let avatarUrl = "";
     let bio = "";
+    let isCPFan = false;
+    let chaohuaLevel = 0;
 
-    // 尝试从 $render_data 提取（微博新版页面）
-    const renderDataMatch = html.match(/\$render_data\s*=\s*\[([^\]]+)\]/);
-    if (renderDataMatch) {
+    // 方法1：通过微博 AJAX 接口获取用户信息
+    try {
+      const ajaxUrl = `https://weibo.com/ajax/profile/info?uid=${uid}`;
+      const ajaxResp = await fetch(ajaxUrl, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          Accept: "application/json, text/plain, */*",
+          "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+          Cookie: `SUB=${weiboSubCookie}`,
+          Referer: `https://weibo.com/u/${uid}`,
+          "X-Requested-With": "XMLHttpRequest",
+        },
+        signal: AbortSignal.timeout(10000),
+      });
+
+      if (ajaxResp.ok) {
+        const contentType = ajaxResp.headers.get("content-type") || "";
+        const rawText = await ajaxResp.text();
+        console.log("[微博验证] AJAX接口 status:", ajaxResp.status, "content-type:", contentType, "body前200字:", rawText.substring(0, 200));
+        if (contentType.includes("json") || rawText.startsWith("{")) {
+          const ajaxData = JSON.parse(rawText);
+          if (ajaxData.data && ajaxData.data.user) {
+            const user = ajaxData.data.user;
+            weiboName = user.screen_name || "";
+            avatarUrl = user.avatar_hd || user.avatar_large || "";
+            bio = user.description || "";
+            console.log("[微博验证] 用户信息获取成功:", weiboName, "简介:", bio);
+          }
+        }
+      } else {
+        console.log("[微博验证] AJAX接口返回非200:", ajaxResp.status);
+      }
+    } catch (e) {
+      console.error("[微博验证] AJAX接口获取失败:", e.message);
+    }
+
+    // 方法2：如果方法1没拿到，尝试移动端 API
+    if (!bio && !weiboName) {
       try {
-        const decoded = decodeURIComponent(renderDataMatch[1]);
-        const jsonData = JSON.parse(decoded);
-        const userInfo = jsonData?.user;
-        if (userInfo) {
-          weiboName = userInfo.screen_name || "";
-          avatarUrl = userInfo.profile_image_url || "";
-          bio = userInfo.description || "";
+        const apiUrl = `https://m.weibo.cn/api/container/getIndex?type=uid&value=${uid}`;
+        const apiResp = await fetch(apiUrl, {
+          headers: {
+            "User-Agent":
+              "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1",
+            Accept: "application/json, text/plain, */*",
+            "Accept-Language": "zh-CN,zh;q=0.9",
+            Cookie: `SUB=${weiboSubCookie}`,
+            Referer: `https://m.weibo.cn/u/${uid}`,
+          },
+          signal: AbortSignal.timeout(10000),
+        });
+
+        if (apiResp.ok) {
+          const rawText = await apiResp.text();
+          console.log("[微博验证] 移动端API status:", apiResp.status, "body前200字:", rawText.substring(0, 200));
+          if (rawText.startsWith("{")) {
+            const apiData = JSON.parse(rawText);
+            const userInfo = apiData?.data?.userInfo;
+            if (userInfo) {
+              weiboName = userInfo.screen_name || "";
+              avatarUrl = userInfo.profile_image_url || "";
+              bio = userInfo.description || "";
+              console.log("[微博验证] 移动端API获取成功:", weiboName, "简介:", bio);
+            }
+          }
+        } else {
+          console.log("[微博验证] 移动端API返回非200:", apiResp.status);
         }
       } catch (e) {
-        // 解析失败，尝试其他方式
+        console.error("[微博验证] 移动端API获取失败:", e.message);
       }
     }
 
-    // 如果没拿到简介，尝试从 meta 标签获取
-    if (!bio) {
-      const descMatch = html.match(/<meta\s+name="description"\s+content="([^"]*)"/i);
-      if (descMatch) bio = descMatch[1];
-    }
-    if (!weiboName) {
-      const nameMatch = html.match(/<title>([^<]*)的微博<\/title>/);
-      if (nameMatch) weiboName = nameMatch[1];
+    // 方法2：如果方法1没拿到，尝试PC端页面解析
+    if (!bio && !weiboName) {
+      try {
+        const weiboUrl = `https://weibo.com/u/${uid}`;
+        const profileResp = await fetch(weiboUrl, {
+          headers: {
+            "User-Agent":
+              "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+            Cookie: `SUB=${weiboSubCookie}`,
+          },
+          redirect: "follow",
+          signal: AbortSignal.timeout(10000),
+        });
+
+        if (profileResp.ok) {
+          const html = await profileResp.text();
+          // 从 $render_data 提取
+          const renderDataMatch = html.match(/\$render_data\s*=\s*\[([^\]]+)\]/);
+          if (renderDataMatch) {
+            try {
+              const decoded = decodeURIComponent(renderDataMatch[1]);
+              const jsonData = JSON.parse(decoded);
+              const userInfo = jsonData?.user;
+              if (userInfo) {
+                weiboName = weiboName || userInfo.screen_name || "";
+                avatarUrl = avatarUrl || userInfo.profile_image_url || "";
+                bio = bio || userInfo.description || "";
+              }
+            } catch (e) { /* 解析失败 */ }
+          }
+          if (!bio) {
+            const descMatch = html.match(/<meta\s+name="description"\s+content="([^"]*)"/i);
+            if (descMatch) bio = descMatch[1];
+          }
+          if (!weiboName) {
+            const nameMatch = html.match(/<title>([^<]*)的微博<\/title>/);
+            if (nameMatch) weiboName = nameMatch[1];
+          }
+        }
+      } catch (e) {
+        console.error("微博PC端页面获取失败:", e.message);
+      }
     }
 
     // 检查简介中是否包含验证码
     const bioMatch = bio.toUpperCase().includes(expectedCode.toUpperCase());
 
-    // 检查超话等级 - 爬取超话页面
-    let isCPFan = false;
-    let chaohuaLevel = 0;
-
+    // 检查超话等级 - 通过移动端 API
+    const chaohuaId = "1008085055c3f1b0f459c3a9e2aa66cf0be0fd";
     try {
-      const chaohuaUrl =
-        "https://weibo.com/p/1008085055c3f1b0f459c3a9e2aa66cf0be0fd";
-      const chaohuaResp = await fetch(chaohuaUrl, {
+      // 查用户是否关注了该超话及等级
+      const chaohuaApiUrl = `https://m.weibo.cn/api/container/getIndex?containerid=1008085055c3f1b0f459c3a9e2aa66cf0be0fd_-_followers&page_type=pageuser&luicode=10000011&lfid=${uid}`;
+      const chaohuaResp = await fetch(chaohuaApiUrl, {
         headers: {
           "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          Cookie: `SUB=${process.env.WEIBO_SUB_COOKIE || ""}`,
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1",
+          Accept: "application/json, text/plain, */*",
+          Cookie: `SUB=${weiboSubCookie}`,
+          Referer: `https://m.weibo.cn/p/${chaohuaId}`,
         },
         signal: AbortSignal.timeout(10000),
       });
 
       if (chaohuaResp.ok) {
-        const chaohuaHtml = await chaohuaResp.text();
-        // 检查用户是否在超话成员列表中
-        isCPFan = chaohuaHtml.includes(uid);
-        // 尝试提取等级信息
-        const levelMatch = chaohuaHtml.match(
-          new RegExp(`${uid}[^>]*level[^\d]*(\\d+)`, "i")
-        );
-        if (levelMatch) chaohuaLevel = parseInt(levelMatch[1]);
+        const chaohuaData = await chaohuaResp.json();
+        const cards = chaohuaData?.data?.cards || [];
+        for (const card of cards) {
+          const userCard = card?.user;
+          if (userCard && String(userCard.id) === String(uid)) {
+            isCPFan = true;
+            // 尝试从 card_group 提取等级
+            const levelBadge = card?.desc || "";
+            const levelMatch = levelBadge.match(/(\d+)/);
+            if (levelMatch) chaohuaLevel = parseInt(levelMatch[1]);
+            break;
+          }
+        }
+        // 如果第一页没找到，也标记为可能关注（可能在后面的页）
+        if (!isCPFan && cards.length > 0) {
+          // 尝试直接查用户超话关系
+          try {
+            const checkUrl = `https://m.weibo.cn/api/container/getIndex?containerid=1008085055c3f1b0f459c3a9e2aa66cf0be0fd_-_member_${uid}`;
+            const checkResp = await fetch(checkUrl, {
+              headers: {
+                "User-Agent":
+                  "Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15",
+                Cookie: `SUB=${weiboSubCookie}`,
+              },
+              signal: AbortSignal.timeout(8000),
+            });
+            if (checkResp.ok) {
+              const checkData = await checkResp.json();
+              if (checkData?.data) {
+                isCPFan = true;
+                const lvl = checkData.data.level || checkData.data.badge_level;
+                if (lvl) chaohuaLevel = parseInt(lvl);
+              }
+            }
+          } catch (e2) { /* 忽略 */ }
+        }
       }
     } catch (e) {
       console.error("超话检查失败:", e.message);
