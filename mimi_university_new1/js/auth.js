@@ -220,13 +220,10 @@ async function doVerify() {
     }
 
     try {
-        // 调用Supabase Edge Function验证
-        const resp = await fetch(SUPABASE_URL + '/functions/v1/verify-weibo', {
+        // 调用后端 API 验证微博
+        const resp = await fetch('/api/verify-weibo', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + SUPABASE_ANON_KEY
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ uid: uid, expectedCode: generatedCode })
         });
 
@@ -349,14 +346,10 @@ function autoLogin() {
         return true;
     }
 
-    // 开发模式：跳过微博验证，答题通过后直接进入主页
+    // 答题通过但未完成微博验证，显示验证步骤
     if (localStorage.getItem(QUIZ_PASSED_KEY) === 'yes') {
-        gateRegisterSuccess('dev_user', {
-            weiboName: '米米测试用户',
-            avatarUrl: '',
-            chaohuaLevel: 10
-        });
-        enterMainPage();
+        gateStep = 2;
+        showGateStep(2);
         return true;
     }
 

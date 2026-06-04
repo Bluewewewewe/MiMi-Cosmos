@@ -410,6 +410,129 @@ app.put("/api/leader-applications/:id", async (req, res) => {
   }
 });
 
+// ==================== 微博验证 API ====================
+app.post("/api/verify-weibo", async (req, res) => {
+  const { uid, expectedCode } = req.body;
+
+  if (!uid || !/^\d+$/.test(uid)) {
+    return res.status(400).json({ error: "请输入正确的微博UID" });
+  }
+  if (!expectedCode) {
+    return res.status(400).json({ error: "请先获取验证码" });
+  }
+
+  try {
+    // 爬取微博用户主页获取简介
+    const weiboUrl = `https://weibo.com/u/${uid}`;
+    const profileResp = await fetch(weiboUrl, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+      },
+      redirect: "follow",
+      signal: AbortSignal.timeout(10000),
+    });
+
+    if (!profileResp.ok) {
+      return res.json({
+        bioMatch: false,
+        isCPFan: false,
+        chaohuaLevel: 0,
+        weiboName: "",
+        avatarUrl: "",
+        error: `微博页面请求失败 (HTTP ${profileResp.status})`,
+      });
+    }
+
+    const html = await profileResp.text();
+
+    // 从页面中提取用户信息
+    let weiboName = "";
+    let avatarUrl = "";
+    let bio = "";
+
+    // 尝试从 $render_data 提取（微博新版页面）
+    const renderDataMatch = html.match(/\$render_data\s*=\s*\[([^\]]+)\]/);
+    if (renderDataMatch) {
+      try {
+        const decoded = decodeURIComponent(renderDataMatch[1]);
+        const jsonData = JSON.parse(decoded);
+        const userInfo = jsonData?.user;
+        if (userInfo) {
+          weiboName = userInfo.screen_name || "";
+          avatarUrl = userInfo.profile_image_url || "";
+          bio = userInfo.description || "";
+        }
+      } catch (e) {
+        // 解析失败，尝试其他方式
+      }
+    }
+
+    // 如果没拿到简介，尝试从 meta 标签获取
+    if (!bio) {
+      const descMatch = html.match(/<meta\s+name="description"\s+content="([^"]*)"/i);
+      if (descMatch) bio = descMatch[1];
+    }
+    if (!weiboName) {
+      const nameMatch = html.match(/<title>([^<]*)的微博<\/title>/);
+      if (nameMatch) weiboName = nameMatch[1];
+    }
+
+    // 检查简介中是否包含验证码
+    const bioMatch = bio.toUpperCase().includes(expectedCode.toUpperCase());
+
+    // 检查超话等级 - 爬取超话页面
+    let isCPFan = false;
+    let chaohuaLevel = 0;
+
+    try {
+      const chaohuaUrl =
+        "https://weibo.com/p/1008085055c3f1b0f459c3a9e2aa66cf0be0fd";
+      const chaohuaResp = await fetch(chaohuaUrl, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          Cookie: `SUB=${process.env.WEIBO_SUB_COOKIE || ""}`,
+        },
+        signal: AbortSignal.timeout(10000),
+      });
+
+      if (chaohuaResp.ok) {
+        const chaohuaHtml = await chaohuaResp.text();
+        // 检查用户是否在超话成员列表中
+        isCPFan = chaohuaHtml.includes(uid);
+        // 尝试提取等级信息
+        const levelMatch = chaohuaHtml.match(
+          new RegExp(`${uid}[^>]*level[^\d]*(\\d+)`, "i")
+        );
+        if (levelMatch) chaohuaLevel = parseInt(levelMatch[1]);
+      }
+    } catch (e) {
+      console.error("超话检查失败:", e.message);
+    }
+
+    res.json({
+      bioMatch,
+      isCPFan,
+      chaohuaLevel,
+      weiboName,
+      avatarUrl,
+    });
+  } catch (err) {
+    console.error("微博验证失败:", err.message);
+    res.status(500).json({
+      bioMatch: false,
+      isCPFan: false,
+      chaohuaLevel: 0,
+      weiboName: "",
+      avatarUrl: "",
+      error: err.message,
+    });
+  }
+});
+
 // SPA 兜底：所有未匹配的非 API 路由返回 index.html
 app.get("{*path}", (req, res, next) => {
   if (req.path.startsWith("/api/")) return next();
