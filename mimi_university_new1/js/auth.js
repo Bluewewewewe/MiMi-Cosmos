@@ -323,7 +323,7 @@ async function submitBrowserVerify() {
             localStorage.getItem('mimi_weibo_uid');
 
         // 提交到后端验证结果
-        var resp = await fetch('/api/verify-weibo-result', {
+        var resp = await fetch('/api/verify-weibo-browser', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ uid: uid, verifyData: data })
@@ -331,9 +331,10 @@ async function submitBrowserVerify() {
         var result = await resp.json();
 
         if (result.success) {
-            gateRegisterSuccess(uid, data);
+            gateRegisterSuccess(uid, result.user || data);
         } else {
-            alert('验证未通过：' + (result.reason || '信息不匹配'));
+            var reason = result.reason || '信息不匹配';
+            alert('验证未通过：\n' + reason);
         }
     } catch (e) {
         alert('验证结果格式错误，请重新复制：' + e.message);
@@ -362,31 +363,26 @@ function gateRegisterSuccess(uid, weiboData) {
 
 async function saveUserToSupabase(uid, tokenData) {
     try {
-        await fetch(SUPABASE_URL + '/rest/v1/mimi_users', {
+        var resp = await fetch('/api/users', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'apikey': SUPABASE_ANON_KEY,
-                'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
-                'Prefer': 'return=minimal'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 weibo_uid: uid,
-                weibo_name: tokenData.weiboName,
-                weibo_avatar_url: tokenData.avatarUrl,
-                chaohua_level: tokenData.chaohuaLevel,
-                quiz_passed: true,
-                token: JSON.stringify(tokenData),
-                token_expires_at: new Date(tokenData.expiresAt).toISOString(),
-                status: 'active',
-                last_active_at: new Date().toISOString()
+                weibo_name: tokenData.weiboName || '',
+                avatar_url: tokenData.avatarUrl || '',
+                chaohua_level: tokenData.chaohuaLevel || 0
             })
         });
+        var result = await resp.json();
+        if (result.user) {
+            console.log('[米米宇宙] 用户数据已保存到数据库');
+        } else {
+            console.warn('[米米宇宙] 用户数据保存失败:', result.error);
+        }
     } catch (e) {
-        console.error('Supabase保存失败:', e);
+        console.warn('[米米宇宙] 用户数据保存失败:', e.message);
     }
 }
-
 // ==================== 进入主页 ====================
 function enterMainPage() {
     var tokenData = getTokenData();
