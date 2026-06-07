@@ -730,16 +730,24 @@
      8. 聊天组件
 ========================================= -->
 <div class="chat-widget" id="chatWidget">
-    <div id="chatMini" class="chat-mini" onclick="toggleChatBox()">💬 公共聊天室</div>
+    <div id="chatMini" class="chat-mini" onclick="toggleChatBox()">
+        <span class="chat-mini-icon">💬</span>
+        <span>聊天室</span>
+        <span id="chatUnread" class="chat-unread" style="display:none">0</span>
+    </div>
     <div id="chatExpand" class="chat-expand">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-            <b>聊天</b>
-            <button class="btn-ui-secondary" style="font-size:11px;" onclick="toggleChatBox()">收起</button>
+        <div class="chat-header">
+            <b>聊天室</b>
+            <div class="chat-header-actions">
+                <button class="chat-btn-icon" onclick="loadMoreChat()" title="加载更多">⬆</button>
+                <button class="chat-btn-icon" onclick="toggleChatBox()" title="收起">✕</button>
+            </div>
         </div>
         <div id="chatMessages" class="chat-messages"></div>
+        <div id="chatLoading" class="chat-loading" style="display:none">加载中...</div>
         <div class="chat-input">
-            <input id="chatInput" placeholder="输入消息">
-            <button class="btn-ui-secondary" onclick="sendChat()">发送</button>
+            <input id="chatInput" placeholder="输入消息..." onkeydown="if(event.key==='Enter')sendChat()">
+            <button class="chat-send-btn" onclick="sendChat()">发送</button>
         </div>
     </div>
 </div>

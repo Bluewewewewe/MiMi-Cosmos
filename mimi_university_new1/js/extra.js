@@ -234,23 +234,77 @@ function saveRankReason() {
     closeM("modalRankReason");
 }
 
+let chatExpanded = false;
+let chatUnreadCount = 0;
+
 function toggleChatBox() {
     chatExpanded = !chatExpanded;
-    document.getElementById("chatMini").style.display = chatExpanded ? "none" : "block";
+    document.getElementById("chatMini").style.display = chatExpanded ? "none" : "flex";
     document.getElementById("chatExpand").style.display = chatExpanded ? "block" : "none";
+    if (chatExpanded) {
+        hideUnread();
+        renderChat();
+        scrollToBottom();
+    }
+}
+function hideUnread() {
+    const badge = document.getElementById("chatUnread");
+    if (badge) { badge.style.display = "none"; badge.textContent = "0"; }
+    chatUnreadCount = 0;
+}
+function showUnread(count) {
+    const badge = document.getElementById("chatUnread");
+    if (badge) { badge.style.display = "inline"; badge.textContent = count > 99 ? "99+" : count; }
 }
 function pushChatMessage(msg) {
     chatMessages.push(msg);
-    if (chatMessages.length > 30) chatMessages.shift();
+    if (chatMessages.length > 500) chatMessages.shift();
     saveAll();
     renderChat();
+    if (chatExpanded) {
+        scrollToBottom();
+    } else {
+        chatUnreadCount++;
+        showUnread(chatUnreadCount);
+    }
 }
+function scrollToBottom() {
+    const wrap = document.getElementById("chatMessages");
+    if (wrap) setTimeout(() => { wrap.scrollTop = wrap.scrollHeight; }, 50);
+}
+let chatRenderStart = 0;
 function renderChat() {
     const wrap = document.getElementById("chatMessages");
-    const last10 = chatMessages.slice(-10);
-    wrap.innerHTML = last10.map((m, i) => `<div class="chat-msg" style="opacity:${0.4 + (i/10)}">[${m.role}] ${m.user}: ${m.text}</div>`).join("");
+    if (!wrap) return;
+    const start = chatRenderStart || Math.max(0, chatMessages.length - 50);
+    const visible = chatMessages.slice(start);
+    wrap.innerHTML = visible.map(m => {
+        const time = m.ts ? new Date(m.ts).toLocaleTimeString("zh-CN", {hour:"2-digit",minute:"2-digit"}) : "";
+        const isSystem = m.role === "系统";
+        return `<div class="chat-msg${isSystem ? " chat-msg-system" : ""}">
+            <span class="chat-msg-time">${time}</span>
+            <span class="chat-msg-name">${m.user || "匿名"}</span>
+            <span class="chat-msg-text">${escapeHtml(m.text || "")}</span>
+        </div>`;
+    }).join("");
+}
+function escapeHtml(str) {
+    return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function loadMoreChat() {
+    if (chatRenderStart <= 0) {
+        chatRenderStart = 0;
+        renderChat();
+        return;
+    }
+    chatRenderStart = Math.max(0, chatRenderStart - 50);
+    const wrap = document.getElementById("chatMessages");
+    const oldHeight = wrap.scrollHeight;
+    renderChat();
+    wrap.scrollTop = wrap.scrollHeight - oldHeight;
 }
 function initChat() {
+    chatRenderStart = Math.max(0, chatMessages.length - 50);
     if (supabaseClient && CLOUD_CHAT_ENABLED) {
         chatChannel = supabaseClient.channel("chat", { config: { broadcast: { self: false } } });
         chatChannel.on("broadcast", { event: "message" }, ({ payload }) => {
@@ -271,6 +325,7 @@ function sendChat() {
         pushChatMessage(msg);
     } else if (chatChannel?.postMessage) {
         chatChannel.postMessage(msg);
+        pushChatMessage(msg);
     } else {
         pushChatMessage(msg);
     }
