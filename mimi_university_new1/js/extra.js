@@ -234,7 +234,7 @@ function saveRankReason() {
     closeM("modalRankReason");
 }
 
-let chatExpanded = false;
+// chatExpanded 已在 core.js 中声明
 let chatUnreadCount = 0;
 
 function toggleChatBox() {
