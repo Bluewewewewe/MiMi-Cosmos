@@ -278,12 +278,14 @@ function renderChat() {
     if (!wrap) return;
     const start = chatRenderStart || Math.max(0, chatMessages.length - 50);
     const visible = chatMessages.slice(start);
+    const myName = currentUser ? currentUser.name : "";
     wrap.innerHTML = visible.map(m => {
         const time = m.ts ? new Date(m.ts).toLocaleTimeString("zh-CN", {hour:"2-digit",minute:"2-digit"}) : "";
         const isSystem = m.role === "系统";
-        return `<div class="chat-msg${isSystem ? " chat-msg-system" : ""}">
+        const isSelf = !isSystem && myName && m.user === myName;
+        return `<div class="chat-msg${isSystem ? " chat-msg-system" : ""}${isSelf ? " chat-msg-self" : ""}">
             <span class="chat-msg-time">${time}</span>
-            <span class="chat-msg-name">${m.user || "匿名"}</span>
+            <span class="chat-msg-name">${isSelf ? "我" : (m.user || "匿名")}</span>
             <span class="chat-msg-text">${escapeHtml(m.text || "")}</span>
         </div>`;
     }).join("");

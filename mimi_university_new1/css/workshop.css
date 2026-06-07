@@ -611,12 +611,12 @@
 }
 
 .ws-apply-status--pending {
-    background: #fff8e1;
-    border-color: #ffcc80;
+    background: rgba(255, 248, 225, 0.5);
+    border-color: rgba(255, 204, 128, 0.5);
 }
 
 .ws-apply-status--ok {
-    background: #e8f5e9;
+    background: rgba(232, 245, 233, 0.5);
     border-color: #a5d6a7;
 }
 
@@ -753,9 +753,9 @@
 }
 
 .modal-close-fab:hover {
-    background: #fff5f5;
+    background: rgba(255, 245, 245, 0.6);
     color: var(--danger);
-    border-color: #ffc9c9;
+    border-color: rgba(255, 201, 201, 0.5);
 }
 
 .modal-admin-scroll {
@@ -813,9 +813,9 @@
 .disclaimer-notice {
     margin-top: 16px;
     padding: 10px 14px;
-    background: #fff8e1;
+    background: rgba(255, 248, 225, 0.45);
     border-radius: 8px;
-    border: 1px solid #ffe082;
+    border: 1px solid rgba(255, 224, 130, 0.4);
 }
 .disclaimer-notice p {
     margin: 0;
