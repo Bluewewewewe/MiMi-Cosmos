@@ -451,6 +451,27 @@ function autoLogin() {
     return false;
 }
 
+// ==================== 彩蛋：连点 🌽 跳过门禁 ====================
+(function() {
+    var cornClicks = 0, cornTimer = null;
+    document.addEventListener('click', function(e) {
+        if (e.target.textContent === '🌽' && e.target.classList.contains('gate-welcome-icon')) {
+            cornClicks++;
+            clearTimeout(cornTimer);
+            cornTimer = setTimeout(function() { cornClicks = 0; }, 2000);
+            if (cornClicks >= 5) {
+                cornClicks = 0;
+                e.target.style.transition = 'transform 0.4s';
+                e.target.style.transform = 'scale(1.5) rotate(360deg)';
+                setTimeout(function() {
+                    localStorage.setItem(TOKEN_KEY, JSON.stringify({name:"admin",type:"admin",ts:Date.now()}));
+                    enterMainPage();
+                }, 400);
+            }
+        }
+    });
+})();
+
 // ==================== 页面加载时初始化 ====================
 document.addEventListener('DOMContentLoaded', function() {
     autoLogin();
