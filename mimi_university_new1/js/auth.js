@@ -424,6 +424,16 @@ function gateLogout() {
 
 // ==================== 自动登录检查 ====================
 function autoLogin() {
+    // 开发模式：URL 带 ?skip=1 直接跳过门禁
+    var params = new URLSearchParams(window.location.search);
+    if (params.get('skip') === '1') {
+        if (!localStorage.getItem(TOKEN_KEY)) {
+            localStorage.setItem(TOKEN_KEY, JSON.stringify({name:"admin",type:"admin",ts:Date.now()}));
+        }
+        enterMainPage();
+        return true;
+    }
+
     var token = localStorage.getItem(TOKEN_KEY);
     if (token && isTokenValid(token)) {
         enterMainPage();
