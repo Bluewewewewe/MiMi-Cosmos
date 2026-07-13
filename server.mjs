@@ -66,6 +66,58 @@ const storage = new S3Storage({
 // Multer 配置 - 内存存储，用于图片上传
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
+// ==================== 认证 API ====================
+
+// 统一认证接口
+app.post("/api/auth", async (req, res) => {
+  try {
+    const { action, username, password } = req.body;
+    
+    if (action === "login") {
+      if (!username || !password) {
+        return res.status(400).json({ success: false, error: "请输入用户名和密码" });
+      }
+
+      const { data: user, error } = await supabase
+        .from("users")
+        .select("*")
+        .eq("username", username)
+        .single();
+
+      if (error || !user) {
+        return res.status(401).json({ success: false, error: "用户名或密码错误" });
+      }
+
+      if (user.password_hash !== password) {
+        return res.status(401).json({ success: false, error: "用户名或密码错误" });
+      }
+
+      // 更新登录时间
+      await supabase
+        .from("users")
+        .update({ updated_at: new Date().toISOString() })
+        .eq("id", user.id);
+
+      res.json({ 
+        success: true, 
+        user: {
+          id: user.id,
+          username: user.username,
+          weibo_name: user.weibo_name,
+          weibo_uid: user.weibo_uid,
+          avatar_url: user.avatar_url,
+          chaohua_level: user.chaohua_level,
+          is_admin: user.is_admin
+        }
+      });
+    } else {
+      res.status(400).json({ success: false, error: "未知操作" });
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // ==================== 用户 API ====================
 
 // 创建用户（注册）

@@ -86,11 +86,11 @@ async function doLogin() {
     }
     
     try {
-        // 调用登录API
-        const resp = await fetch('/api/login', {
+        // 调用统一认证API
+        const resp = await fetch('/api/auth', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
+            body: JSON.stringify({ action: 'login', username, password })
         });
         const data = await resp.json();
         
