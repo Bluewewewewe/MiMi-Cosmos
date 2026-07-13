@@ -7,12 +7,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>米米宇宙 - 智能教务管理系统</title>
-    <link rel="stylesheet" href="css/core.css?v=8">
-<link rel="stylesheet" href="css/auth.css?v=8">
-<link rel="stylesheet" href="css/schedule.css?v=8">
-<link rel="stylesheet" href="css/teacher.css?v=8">
-<link rel="stylesheet" href="css/extra.css?v=8">
-<link rel="stylesheet" href="css/workshop.css?v=8">
+    <link rel="stylesheet" href="css/core.css?v=9">
+<link rel="stylesheet" href="css/auth.css?v=9">
+<link rel="stylesheet" href="css/schedule.css?v=9">
+<link rel="stylesheet" href="css/teacher.css?v=9">
+<link rel="stylesheet" href="css/extra.css?v=9">
+<link rel="stylesheet" href="css/workshop.css?v=9">
 <style>
     /* 按钮被点击时的样式：绿色背景，白色文字，持续300ms（不影响登录页切换按钮） */
     .btn-active:not(.auth-tab) {
@@ -38,31 +38,32 @@
             <p>甜玉米专属 ✨ 栩你渝生CP粉丝空间</p>
         </div>
 
-        <!-- Step 0: 欢迎页 -->
-        <div id="gateWelcome" class="gate-step">
+        <!-- 登录/注册切换 -->
+        <div id="authTabs" class="auth-tabs">
+            <button class="auth-tab active" onclick="switchAuthTab('login')">登录</button>
+            <button class="auth-tab" onclick="switchAuthTab('register')">注册</button>
+        </div>
+
+        <!-- 登录页 -->
+        <div id="loginPage" class="gate-step">
             <div class="gate-welcome-icon">🌽</div>
-            <h2 class="gate-title">欢迎来到米米宇宙</h2>
-            <p class="gate-desc">这里是栩你渝生CP粉丝的专属空间<br>为了保护我们的社区，需要完成简单的验证</p>
-            <div class="gate-steps-preview">
-                <div class="gate-step-item"><span>1️⃣</span> 答题验证</div>
-                <div class="gate-step-item"><span>2️⃣</span> 微博验证</div>
-                <div class="gate-step-item"><span>3️⃣</span> 进入宇宙 ✨</div>
+            <h2 class="gate-title">欢迎回来</h2>
+            <p class="gate-desc">输入微博UID快速登录</p>
+            <div class="gate-weibo-form">
+                <div class="gate-form-group">
+                    <label>微博UID</label>
+                    <input type="text" id="loginUid" placeholder="输入你的微博UID（纯数字）">
+                    <p class="gate-hint">如何获取UID：微博主页 → 右上角 → 复制链接 → 末尾数字</p>
+                </div>
+                <button class="gate-btn gate-btn-primary" onclick="doLogin()">登录 🚀</button>
             </div>
-            <button class="gate-btn gate-btn-primary" onclick="startGate()">开始验证 🚀</button>
-            <p class="gate-note">需要栩你渝生超话7级以上</p>
+            <p id="loginError" class="gate-error" style="display:none;"></p>
         </div>
 
-        <!-- Step 1: 答题验证 -->
-        <div id="gateQuiz" class="gate-step" style="display:none;">
-            <h2 class="gate-title">🧠 粉丝验证</h2>
-            <p class="gate-desc">答对3题即可通过（每题30秒）</p>
-            <div id="quizContent"></div>
-        </div>
-
-        <!-- Step 2: 微博验证 -->
-        <div id="gateWeibo" class="gate-step" style="display:none;">
-            <h2 class="gate-title">📱 微博验证</h2>
-            <p class="gate-desc">验证你的微博身份和超话等级</p>
+        <!-- 注册页 -->
+        <div id="registerPage" class="gate-step" style="display:none;">
+            <h2 class="gate-title">加入米米宇宙</h2>
+            <p class="gate-desc">需要栩你渝生超话7级以上才能注册</p>
             <div class="gate-weibo-form">
                 <div class="gate-form-group">
                     <label>微博UID</label>
@@ -74,16 +75,16 @@
                     <div class="gate-code-label">请将以下验证码添加到微博简介中：</div>
                     <div class="gate-code-display" id="codeDisplay">------</div>
                     <p class="gate-hint">去微博 → 编辑个人资料 → 修改简介 → 填入上面的验证码</p>
-                    <button class="gate-btn gate-btn-primary" id="verifyBtn" onclick="doVerify()">🔍 验证</button>
+                    <button class="gate-btn gate-btn-primary" id="verifyBtn" onclick="doVerify()">🔍 验证并注册</button>
                     <p class="gate-hint">验证成功后可以把简介改回去哦</p>
                 </div>
             </div>
         </div>
 
-        <!-- Step 3: 成功 -->
+        <!-- 注册成功 -->
         <div id="gateSuccess" class="gate-step" style="display:none;">
             <div class="gate-success-icon">🎉</div>
-            <h2 class="gate-title">验证成功！</h2>
+            <h2 class="gate-title">注册成功！</h2>
             <p class="gate-desc">欢迎加入米米宇宙，甜玉米！🌽</p>
             <button class="gate-btn gate-btn-primary" onclick="enterMainPage()">进入米米宇宙 ✨</button>
         </div>
@@ -757,14 +758,14 @@
 ========================================= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="js/api.js?v=8"></script>
-<script src="js/core.js?v=8"></script>
-<script src="js/quiz-data.js?v=8"></script>
-<script src="js/auth.js?v=8"></script>
-<script src="js/schedule.js?v=8"></script>
-<script src="js/teacher.js?v=8"></script>
-<script src="js/extra.js?v=8"></script>
-<script src="js/workshop.js?v=8"></script>
+<script src="js/api.js?v=9"></script>
+<script src="js/core.js?v=9"></script>
+<script src="js/quiz-data.js?v=9"></script>
+<script src="js/auth.js?v=9"></script>
+<script src="js/schedule.js?v=9"></script>
+<script src="js/teacher.js?v=9"></script>
+<script src="js/extra.js?v=9"></script>
+<script src="js/workshop.js?v=9"></script>
 
 </body>
 </html>

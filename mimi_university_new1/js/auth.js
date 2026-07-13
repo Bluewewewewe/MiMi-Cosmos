@@ -1,24 +1,12 @@
 // ==================== 粉丝门禁系统 ====================
-// V2.0 - 微博验证 + 答题验证 + 超话等级检查
+// V3.0 - 登录/注册 + 微博验证
 
 // SUPABASE_URL 和 SUPABASE_ANON_KEY 已在 core.js 中声明，此处不再重复
 const TOKEN_KEY = "mimi_gate_token";
-const QUIZ_PASSED_KEY = "mimi_quiz_passed";
 const WEIBO_UID_KEY = "mimi_weibo_uid";
 const TOKEN_EXPIRE_DAYS = 90;
-const QUIZ_TIME_LIMIT = 30; // 每题秒数
-const QUIZ_FAIL_COOLDOWN = 10 * 60 * 1000; // 10分钟冷却
 const VERIFY_CODE_EXPIRE = 15 * 60 * 1000; // 15分钟过期
-const MAX_QUIZ_FAIL = 3;
 
-let gateStep = 0; // 0=欢迎 1=答题 2=微博验证 3=成功
-let currentQuiz = [];
-let quizIndex = 0;
-let quizCorrect = 0;
-let quizTimer = null;
-let quizTimeLeft = 0;
-let quizFailCount = parseInt(localStorage.getItem('mimi_quiz_fail') || '0');
-let quizLastFail = parseInt(localStorage.getItem('mimi_quiz_last_fail') || '0');
 let generatedCode = '';
 let codeGeneratedAt = 0;
 
@@ -26,15 +14,11 @@ let codeGeneratedAt = 0;
 function initGate() {
     const token = localStorage.getItem(TOKEN_KEY);
     if (token && isTokenValid(token)) {
-        // 已有有效token，直接进入
         enterMainPage();
         return;
     }
-    // 检查答题是否已通过
-    if (localStorage.getItem(QUIZ_PASSED_KEY) === 'yes') {
-        gateStep = 2;
-    }
-    showGateStep(gateStep);
+    // 默认显示登录页
+    switchAuthTab('login');
 }
 
 function isTokenValid(token) {
@@ -50,130 +34,81 @@ function getTokenData() {
     } catch { return null; }
 }
 
-// ==================== 页面切换 ====================
-function showGateStep(step) {
-    gateStep = step;
-    const pages = ['gateWelcome', 'gateQuiz', 'gateWeibo', 'gateSuccess'];
-    pages.forEach(function(id, i) {
-        const el = document.getElementById(id);
-        if (el) el.style.display = (i === step) ? 'block' : 'none';
-    });
-}
-
-// ==================== 欢迎页 ====================
-function startGate() {
-    gateStep = 1;
-    showGateStep(1);
-    startQuiz();
-}
-
-// ==================== 答题验证 ====================
-function startQuiz() {
-    // 检查冷却
-    if (quizFailCount >= MAX_QUIZ_FAIL) {
-        const elapsed = Date.now() - quizLastFail;
-        if (elapsed < QUIZ_FAIL_COOLDOWN) {
-            const mins = Math.ceil((QUIZ_FAIL_COOLDOWN - elapsed) / 60000);
-            alert('答题失败次数过多，请' + mins + '分钟后再试');
-            return;
-        }
-        quizFailCount = 0;
+// ==================== 登录/注册切换 ====================
+function switchAuthTab(tab) {
+    const loginPage = document.getElementById('loginPage');
+    const registerPage = document.getElementById('registerPage');
+    const tabs = document.querySelectorAll('.auth-tab');
+    
+    tabs.forEach(t => t.classList.remove('active'));
+    
+    if (tab === 'login') {
+        if (loginPage) loginPage.style.display = 'block';
+        if (registerPage) registerPage.style.display = 'none';
+        tabs[0].classList.add('active');
+    } else {
+        if (loginPage) loginPage.style.display = 'none';
+        if (registerPage) registerPage.style.display = 'block';
+        tabs[1].classList.add('active');
+        // 重置注册页状态
+        const codeArea = document.getElementById('codeArea');
+        if (codeArea) codeArea.style.display = 'none';
+        generatedCode = '';
     }
-    currentQuiz = getRandomQuiz(3);
-    quizIndex = 0;
-    quizCorrect = 0;
-    renderQuizQuestion();
+    // 隐藏错误提示
+    const loginError = document.getElementById('loginError');
+    if (loginError) loginError.style.display = 'none';
 }
 
-function renderQuizQuestion() {
-    if (quizIndex >= currentQuiz.length) {
-        finishQuiz();
+// ==================== 登录 ====================
+async function doLogin() {
+    const uidInput = document.getElementById('loginUid');
+    const errorEl = document.getElementById('loginError');
+    if (!uidInput) return;
+    
+    const uid = uidInput.value.trim();
+    if (!uid || !/^\d+$/.test(uid)) {
+        if (errorEl) {
+            errorEl.textContent = '请输入正确的微博UID（纯数字）';
+            errorEl.style.display = 'block';
+        }
         return;
     }
-    const q = currentQuiz[quizIndex];
-    const container = document.getElementById('quizContent');
-    if (!container) return;
-
-    // 倒计时
-    quizTimeLeft = QUIZ_TIME_LIMIT;
-    clearInterval(quizTimer);
-    updateTimerDisplay();
-
-    quizTimer = setInterval(function() {
-        quizTimeLeft--;
-        updateTimerDisplay();
-        if (quizTimeLeft <= 0) {
-            clearInterval(quizTimer);
-            // 超时判错
-            quizIndex++;
-            renderQuizQuestion();
+    
+    try {
+        // 查询用户是否已注册
+        const resp = await fetch('/api/users/' + uid);
+        const data = await resp.json();
+        
+        if (data.user) {
+            // 用户已注册，直接登录
+            var tokenData = {
+                weiboUid: uid,
+                weiboName: data.user.weibo_name || '',
+                avatarUrl: data.user.avatar_url || '',
+                chaohuaLevel: data.user.chaohua_level || 0,
+                createdAt: Date.now(),
+                expiresAt: Date.now() + TOKEN_EXPIRE_DAYS * 24 * 60 * 60 * 1000
+            };
+            localStorage.setItem(TOKEN_KEY, JSON.stringify(tokenData));
+            localStorage.setItem(WEIBO_UID_KEY, uid);
+            enterMainPage();
+        } else {
+            // 用户未注册
+            if (errorEl) {
+                errorEl.textContent = '该微博UID尚未注册，请先注册';
+                errorEl.style.display = 'block';
+            }
         }
-    }, 1000);
-
-    container.innerHTML = '<div class="quiz-progress">第 ' + (quizIndex + 1) + ' / ' + currentQuiz.length + ' 题</div>' +
-        '<div class="quiz-timer"><div class="quiz-timer-bar" id="timerBar"></div><span id="timerText">' + quizTimeLeft + 's</span></div>' +
-        '<div class="quiz-question">' + q.question + '</div>' +
-        '<div class="quiz-options">' +
-        q.options.map(function(opt, i) {
-            return '<button class="quiz-option" onclick="selectAnswer(' + i + ')">' + opt + '</button>';
-        }).join('') +
-        '</div>';
-}
-
-function updateTimerDisplay() {
-    const bar = document.getElementById('timerBar');
-    const text = document.getElementById('timerText');
-    if (bar) bar.style.width = (quizTimeLeft / QUIZ_TIME_LIMIT * 100) + '%';
-    if (text) text.textContent = quizTimeLeft + 's';
-    if (bar) {
-        bar.style.background = quizTimeLeft <= 5 ? '#ff4757' : quizTimeLeft <= 10 ? '#ffa502' : '#7bed9f';
-    }
-}
-
-function selectAnswer(idx) {
-    clearInterval(quizTimer);
-    const q = currentQuiz[quizIndex];
-    const btns = document.querySelectorAll('.quiz-option');
-    btns.forEach(function(btn, i) {
-        btn.disabled = true;
-        if (i === q.answer) btn.classList.add('correct');
-        if (i === idx && idx !== q.answer) btn.classList.add('wrong');
-    });
-    if (idx === q.answer) quizCorrect++;
-
-    setTimeout(function() {
-        quizIndex++;
-        renderQuizQuestion();
-    }, 800);
-}
-
-function finishQuiz() {
-    clearInterval(quizTimer);
-    if (quizCorrect >= 3) {
-        localStorage.setItem(QUIZ_PASSED_KEY, 'yes');
-        quizFailCount = 0;
-        localStorage.setItem('mimi_quiz_fail', '0');
-        gateStep = 2;
-        showGateStep(2);
-    } else {
-        quizFailCount++;
-        localStorage.setItem('mimi_quiz_fail', String(quizFailCount));
-        localStorage.setItem('mimi_quiz_last_fail', String(Date.now()));
-        const container = document.getElementById('quizContent');
-        if (container) {
-            container.innerHTML = '<div class="quiz-result fail">' +
-                '<div class="quiz-result-icon">😢</div>' +
-                '<div class="quiz-result-text">答对 ' + quizCorrect + ' / ' + currentQuiz.length + ' 题</div>' +
-                '<div class="quiz-result-hint">需要全部答对才能进入哦</div>' +
-                (quizFailCount >= MAX_QUIZ_FAIL ?
-                    '<div class="quiz-result-cooldown">失败次数过多，请10分钟后再试</div>' :
-                    '<button class="gate-btn" onclick="startQuiz()">再试一次</button>') +
-                '</div>';
+    } catch (e) {
+        if (errorEl) {
+            errorEl.textContent = '网络错误，请稍后重试';
+            errorEl.style.display = 'block';
         }
     }
 }
 
-// ==================== 微博验证 ====================
+// ==================== 注册（微博验证） ====================
 function generateVerifyCode() {
     const uid = document.getElementById('weiboUid').value.trim();
     if (!uid || !/^\d+$/.test(uid)) {
@@ -291,7 +226,7 @@ function showBrowserVerify(uid, code) {
         '</div>' +
 
         '<button onclick="submitBrowserVerify()" style="background:#c0e070;color:#000;border:none;padding:12px 30px;border-radius:8px;cursor:pointer;font-size:15px;font-weight:bold;">提交验证</button>' +
-        '<button onclick="showGateStep(2)" style="background:transparent;color:#aaa;border:1px solid rgba(255,255,255,0.2);padding:12px 20px;border-radius:8px;cursor:pointer;font-size:13px;margin-left:10px;">返回重试</button>' +
+        '<button onclick="switchAuthTab(\'register\')" style="background:transparent;color:#aaa;border:1px solid rgba(255,255,255,0.2);padding:12px 20px;border-radius:8px;cursor:pointer;font-size:13px;margin-left:10px;">返回重试</button>' +
         '</div>';
 }
 
@@ -357,8 +292,20 @@ function gateRegisterSuccess(uid, weiboData) {
     // 写入Supabase
     saveUserToSupabase(uid, tokenData);
 
-    gateStep = 3;
-    showGateStep(3);
+    // 显示成功页
+    showRegisterSuccess();
+}
+
+function showRegisterSuccess() {
+    const loginPage = document.getElementById('loginPage');
+    const registerPage = document.getElementById('registerPage');
+    const successPage = document.getElementById('gateSuccess');
+    const authTabs = document.getElementById('authTabs');
+    
+    if (loginPage) loginPage.style.display = 'none';
+    if (registerPage) registerPage.style.display = 'none';
+    if (authTabs) authTabs.style.display = 'none';
+    if (successPage) successPage.style.display = 'block';
 }
 
 async function saveUserToSupabase(uid, tokenData) {
@@ -418,7 +365,6 @@ function enterMainPage() {
 // ==================== 登出 ====================
 function gateLogout() {
     localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(QUIZ_PASSED_KEY);
     location.reload();
 }
 
@@ -440,14 +386,8 @@ function autoLogin() {
         return true;
     }
 
-    // 答题通过但未完成微博验证，显示验证步骤
-    if (localStorage.getItem(QUIZ_PASSED_KEY) === 'yes') {
-        gateStep = 2;
-        showGateStep(2);
-        return true;
-    }
-
-    showGateStep(gateStep);
+    // 显示登录页
+    switchAuthTab('login');
     return false;
 }
 
