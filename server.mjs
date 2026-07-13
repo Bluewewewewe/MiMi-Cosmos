@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import path from "path";
@@ -45,10 +46,10 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "mimi_university_new1")));
 
 // Supabase 客户端
-const supabaseUrl = process.env.COZE_SUPABASE_URL;
-const supabaseKey = process.env.COZE_SUPABASE_SERVICE_ROLE_KEY;
-if (!supabaseUrl || !supabaseKey) {
-  console.error("Missing COZE_SUPABASE_URL or COZE_SUPABASE_SERVICE_ROLE_KEY");
+const supabaseUrl = process.env.COZE_SUPABASE_URL || "https://fcenabrbftpqeeuufbdr.supabase.co";
+const supabaseKey = process.env.COZE_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
+if (!supabaseKey) {
+  console.error("Missing Supabase key");
   process.exit(1);
 }
 const supabase = createClient(supabaseUrl, supabaseKey);
