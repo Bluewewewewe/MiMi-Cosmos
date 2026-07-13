@@ -7,12 +7,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>米米宇宙 - 智能教务管理系统</title>
-    <link rel="stylesheet" href="css/core.css?v=9">
-<link rel="stylesheet" href="css/auth.css?v=9">
-<link rel="stylesheet" href="css/schedule.css?v=9">
-<link rel="stylesheet" href="css/teacher.css?v=9">
-<link rel="stylesheet" href="css/extra.css?v=9">
-<link rel="stylesheet" href="css/workshop.css?v=9">
+    <link rel="stylesheet" href="css/core.css?v=10">
+<link rel="stylesheet" href="css/auth.css?v=10">
+<link rel="stylesheet" href="css/schedule.css?v=10">
+<link rel="stylesheet" href="css/teacher.css?v=10">
+<link rel="stylesheet" href="css/extra.css?v=10">
+<link rel="stylesheet" href="css/workshop.css?v=10">
 <style>
     /* 按钮被点击时的样式：绿色背景，白色文字，持续300ms（不影响登录页切换按钮） */
     .btn-active:not(.auth-tab) {
@@ -48,12 +48,15 @@
         <div id="loginPage" class="gate-step">
             <div class="gate-welcome-icon">🌽</div>
             <h2 class="gate-title">欢迎回来</h2>
-            <p class="gate-desc">输入微博UID快速登录</p>
+            <p class="gate-desc">使用账号密码登录</p>
             <div class="gate-weibo-form">
                 <div class="gate-form-group">
-                    <label>微博UID</label>
-                    <input type="text" id="loginUid" placeholder="输入你的微博UID（纯数字）">
-                    <p class="gate-hint">如何获取UID：微博主页 → 右上角 → 复制链接 → 末尾数字</p>
+                    <label>用户名</label>
+                    <input type="text" id="loginUsername" placeholder="输入用户名">
+                </div>
+                <div class="gate-form-group">
+                    <label>密码</label>
+                    <input type="password" id="loginPassword" placeholder="输入密码">
                 </div>
                 <button class="gate-btn gate-btn-primary" onclick="doLogin()">登录 🚀</button>
             </div>
@@ -65,6 +68,14 @@
             <h2 class="gate-title">加入米米宇宙</h2>
             <p class="gate-desc">需要栩你渝生超话7级以上才能注册</p>
             <div class="gate-weibo-form">
+                <div class="gate-form-group">
+                    <label>用户名</label>
+                    <input type="text" id="regUsername" placeholder="设置用户名（登录用）">
+                </div>
+                <div class="gate-form-group">
+                    <label>密码</label>
+                    <input type="password" id="regPassword" placeholder="设置密码">
+                </div>
                 <div class="gate-form-group">
                     <label>微博UID</label>
                     <input type="text" id="weiboUid" placeholder="输入你的微博UID（纯数字）">
@@ -758,14 +769,14 @@
 ========================================= -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="js/api.js?v=9"></script>
-<script src="js/core.js?v=9"></script>
-<script src="js/quiz-data.js?v=9"></script>
-<script src="js/auth.js?v=9"></script>
-<script src="js/schedule.js?v=9"></script>
-<script src="js/teacher.js?v=9"></script>
-<script src="js/extra.js?v=9"></script>
-<script src="js/workshop.js?v=9"></script>
+<script src="js/api.js?v=10"></script>
+<script src="js/core.js?v=10"></script>
+<script src="js/quiz-data.js?v=10"></script>
+<script src="js/auth.js?v=10"></script>
+<script src="js/schedule.js?v=10"></script>
+<script src="js/teacher.js?v=10"></script>
+<script src="js/extra.js?v=10"></script>
+<script src="js/workshop.js?v=10"></script>
 
 </body>
 </html>

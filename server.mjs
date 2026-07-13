@@ -68,26 +68,33 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 
 
 // ==================== 用户 API ====================
 
-// 创建用户
+// 创建用户（注册）
 app.post("/api/users", async (req, res) => {
   try {
-    const { weibo_uid, weibo_name, avatar_url, chaohua_level } = req.body;
+    const { weibo_uid, weibo_name, avatar_url, chaohua_level, username, password } = req.body;
     if (!weibo_uid) return res.status(400).json({ error: "缺少微博UID" });
+    if (!username || !password) return res.status(400).json({ error: "缺少用户名或密码" });
 
-    // 查找已有用户
-    const { data: existing } = await supabase
+    // 检查用户名是否已存在
+    const { data: existingUser } = await supabase
+      .from("users")
+      .select("*")
+      .eq("username", username)
+      .single();
+
+    if (existingUser) {
+      return res.status(400).json({ error: "用户名已存在" });
+    }
+
+    // 检查微博UID是否已注册
+    const { data: existingWeibo } = await supabase
       .from("users")
       .select("*")
       .eq("weibo_uid", String(weibo_uid))
       .single();
 
-    if (existing) {
-      // 更新登录时间
-      await supabase
-        .from("users")
-        .update({ updated_at: new Date().toISOString(), weibo_name: weibo_name || existing.weibo_name })
-        .eq("id", existing.id);
-      return res.json({ user: existing });
+    if (existingWeibo) {
+      return res.status(400).json({ error: "该微博UID已注册" });
     }
 
     // 创建新用户
@@ -95,11 +102,13 @@ app.post("/api/users", async (req, res) => {
       .from("users")
       .insert({
         weibo_uid: String(weibo_uid),
-        weibo_name: weibo_name || `用户${weibo_uid}`,
+        weibo_name: weibo_name || username,
         avatar_url: avatar_url || "",
         id: String(weibo_uid),
         chaohua_level: chaohua_level || 0,
         is_admin: false,
+        username: username,
+        password_hash: password, // 简单存储，生产环境应加密
       })
       .select()
       .single();
@@ -111,42 +120,35 @@ app.post("/api/users", async (req, res) => {
   }
 });
 
-// 用户登录
-app.post("/api/users/login", async (req, res) => {
+// 用户名密码登录
+app.post("/api/login", async (req, res) => {
   try {
-    const { weibo_uid, weibo_name, avatar_url, chaohua_level } = req.body;
-    if (!weibo_uid) return res.status(400).json({ error: "缺少微博UID" });
-
-    const { data: existing } = await supabase
-      .from("users")
-      .select("*")
-      .eq("weibo_uid", String(weibo_uid))
-      .single();
-
-    if (existing) {
-      const { data } = await supabase
-        .from("users")
-        .update({ updated_at: new Date().toISOString() })
-        .eq("id", existing.id)
-        .select()
-        .single();
-      return res.json({ success: true, user: data });
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ error: "请输入用户名和密码" });
     }
 
-    const { data, error } = await supabase
+    const { data: user, error } = await supabase
       .from("users")
-      .insert({
-        id: String(weibo_uid),
-        weibo_uid: String(weibo_uid),
-        weibo_name: weibo_name || "米米同学",
-        avatar_url: avatar_url || "",
-        chaohua_level: chaohua_level || 0,
-      })
-      .select()
+      .select("*")
+      .eq("username", username)
       .single();
 
-    if (error) return res.status(500).json({ error: error.message });
-    res.json({ success: true, user: data });
+    if (error || !user) {
+      return res.status(401).json({ error: "用户名或密码错误" });
+    }
+
+    if (user.password_hash !== password) {
+      return res.status(401).json({ error: "用户名或密码错误" });
+    }
+
+    // 更新登录时间
+    await supabase
+      .from("users")
+      .update({ updated_at: new Date().toISOString() })
+      .eq("id", user.id);
+
+    res.json({ success: true, user });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

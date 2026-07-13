@@ -62,41 +62,56 @@ function switchAuthTab(tab) {
 
 // ==================== 登录 ====================
 async function doLogin() {
-    const uidInput = document.getElementById('loginUid');
+    const usernameInput = document.getElementById('loginUsername');
+    const passwordInput = document.getElementById('loginPassword');
     const errorEl = document.getElementById('loginError');
-    if (!uidInput) return;
+    if (!usernameInput || !passwordInput) return;
     
-    const uid = uidInput.value.trim();
-    if (!uid || !/^\d+$/.test(uid)) {
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value;
+    
+    if (!username) {
         if (errorEl) {
-            errorEl.textContent = '请输入正确的微博UID（纯数字）';
+            errorEl.textContent = '请输入用户名';
+            errorEl.style.display = 'block';
+        }
+        return;
+    }
+    if (!password) {
+        if (errorEl) {
+            errorEl.textContent = '请输入密码';
             errorEl.style.display = 'block';
         }
         return;
     }
     
     try {
-        // 查询用户是否已注册
-        const resp = await fetch('/api/users/' + uid);
+        // 调用登录API
+        const resp = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
         const data = await resp.json();
         
-        if (data.user) {
-            // 用户已注册，直接登录
+        if (data.success && data.user) {
+            // 登录成功
             var tokenData = {
-                weiboUid: uid,
-                weiboName: data.user.weibo_name || '',
+                weiboUid: data.user.weibo_uid || '',
+                weiboName: data.user.weibo_name || username,
                 avatarUrl: data.user.avatar_url || '',
                 chaohuaLevel: data.user.chaohua_level || 0,
+                username: username,
                 createdAt: Date.now(),
                 expiresAt: Date.now() + TOKEN_EXPIRE_DAYS * 24 * 60 * 60 * 1000
             };
             localStorage.setItem(TOKEN_KEY, JSON.stringify(tokenData));
-            localStorage.setItem(WEIBO_UID_KEY, uid);
+            localStorage.setItem(WEIBO_UID_KEY, data.user.weibo_uid || '');
             enterMainPage();
         } else {
-            // 用户未注册
+            // 登录失败
             if (errorEl) {
-                errorEl.textContent = '该微博UID尚未注册，请先注册';
+                errorEl.textContent = data.error || '用户名或密码错误';
                 errorEl.style.display = 'block';
             }
         }
@@ -277,20 +292,30 @@ async function submitBrowserVerify() {
 }
 
 function gateRegisterSuccess(uid, weiboData) {
+    // 获取注册表单的用户名和密码
+    const username = document.getElementById('regUsername') ? document.getElementById('regUsername').value.trim() : '';
+    const password = document.getElementById('regPassword') ? document.getElementById('regPassword').value : '';
+    
+    if (!username || !password) {
+        alert('请填写用户名和密码');
+        return;
+    }
+    
     // 生成token
     var tokenData = {
         weiboUid: uid,
-        weiboName: weiboData.weiboName || '',
+        weiboName: weiboData.weiboName || username,
         avatarUrl: weiboData.avatarUrl || '',
         chaohuaLevel: weiboData.chaohuaLevel || 0,
+        username: username,
         createdAt: Date.now(),
         expiresAt: Date.now() + TOKEN_EXPIRE_DAYS * 24 * 60 * 60 * 1000
     };
     localStorage.setItem(TOKEN_KEY, JSON.stringify(tokenData));
     localStorage.setItem(WEIBO_UID_KEY, uid);
 
-    // 写入Supabase
-    saveUserToSupabase(uid, tokenData);
+    // 写入Supabase（包含用户名和密码）
+    saveUserToSupabase(uid, tokenData, username, password);
 
     // 显示成功页
     showRegisterSuccess();
@@ -308,7 +333,7 @@ function showRegisterSuccess() {
     if (successPage) successPage.style.display = 'block';
 }
 
-async function saveUserToSupabase(uid, tokenData) {
+async function saveUserToSupabase(uid, tokenData, username, password) {
     try {
         var resp = await fetch('/api/users', {
             method: 'POST',
@@ -317,7 +342,9 @@ async function saveUserToSupabase(uid, tokenData) {
                 weibo_uid: uid,
                 weibo_name: tokenData.weiboName || '',
                 avatar_url: tokenData.avatarUrl || '',
-                chaohua_level: tokenData.chaohuaLevel || 0
+                chaohua_level: tokenData.chaohuaLevel || 0,
+                username: username,
+                password: password
             })
         });
         var result = await resp.json();
